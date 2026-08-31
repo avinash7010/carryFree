@@ -7,11 +7,13 @@ import {
   getMyBookings,
   getMyPackages,
   getPackageMatches,
+  getReceivedClaims,
   getTrackingHistory,
   markAllNotificationsRead,
   markNotificationRead,
   respondToBooking,
   startTransit,
+  updateClaimStatus,
   verifyDelivery,
 } from "../services/carryfreeApi";
 import { getCurrentUser, getValidToken } from "../services/auth";
@@ -33,6 +35,7 @@ function CarryDashboard() {
   const [unreadCount, setUnreadCount] = useState(0);
   const [trackingInputs, setTrackingInputs] = useState({});
   const [trackingHistory, setTrackingHistory] = useState({});
+  const [claims, setClaims] = useState([]);
 
   const loadDashboard = async (showSpinner = true) => {
     if (!token) {
@@ -61,6 +64,14 @@ function CarryDashboard() {
 
       if (!selectedPackageId && packageList.length > 0) {
         setSelectedPackageId(packageList[0]._id);
+      }
+
+      // Claims are loaded separately so a failure here never blocks the rest of the dashboard
+      try {
+        const claimsResponse = await getReceivedClaims(token);
+        setClaims(claimsResponse.data || []);
+      } catch {
+        // silently ignore — claims section will show empty state
       }
     } catch (loadError) {
       setError(loadError.message || "Failed to load dashboard");
@@ -192,6 +203,26 @@ function CarryDashboard() {
       setTrackingHistory((prev) => ({ ...prev, [bookingId]: response.data || [] }));
     } catch (trackingError) {
       setError(trackingError.message || "Failed to load tracking history");
+    }
+  };
+
+  const handleClaimAction = async (claimId, status) => {
+    if (!token) {
+      return;
+    }
+
+    setActionLoading(true);
+    setError("");
+    setMessage("");
+
+    try {
+      await updateClaimStatus(claimId, status, token);
+      setMessage(`Claim ${status} successfully.`);
+      await loadDashboard(false);
+    } catch (claimError) {
+      setError(claimError.message || `Failed to ${status} claim`);
+    } finally {
+      setActionLoading(false);
     }
   };
 
@@ -330,6 +361,51 @@ function CarryDashboard() {
                   </div>
                 ))}
                 {mySenderBookings.length === 0 ? <p className="default-state">No sender bookings yet.</p> : null}
+              </div>
+            </section>
+
+            <section className="dashboard-panel">
+              <div className="panel-title-row">
+                <h3>Lost & Found Claims</h3>
+                <span className="dashboard-pill alt">{claims.length} total</span>
+              </div>
+              <div className="booking-list">
+                {claims.length === 0 ? <p className="default-state">No claims received yet. When someone claims an item you found, it will appear here.</p> : null}
+                {claims.map((claim) => {
+                  const lostItem = claim.lostItem || {};
+                  const foundItem = claim.foundItem || {};
+                  const claimant = claim.claimant || {};
+
+                  return (
+                    <div key={claim._id} className="booking-card claim-card">
+                      <div className="claim-card-header">
+                        <div>
+                          <p className="booking-route">{lostItem.title || "Lost item"} ↔ {foundItem.title || "Found item"}</p>
+                          <p className="booking-meta">
+                            Claimant: {claimant.name || "Unknown"} ({claimant.email || ""})
+                          </p>
+                          <p className="booking-meta">Message: {claim.message}</p>
+                          <p className="booking-meta">
+                            <span className={`status-badge ${claim.status === "pending" ? "neutral" : claim.status === "approved" ? "found" : "lost"}`}>
+                              {claim.status}
+                            </span>
+                            {' '}{new Date(claim.createdAt).toLocaleString()}
+                          </p>
+                        </div>
+                      </div>
+                      {claim.status === "pending" ? (
+                        <div className="action-row compact">
+                          <button type="button" className="secondary-btn small-btn success" onClick={() => handleClaimAction(claim._id, "approved")} disabled={actionLoading}>
+                            Approve
+                          </button>
+                          <button type="button" className="secondary-btn small-btn danger" onClick={() => handleClaimAction(claim._id, "rejected")} disabled={actionLoading}>
+                            Reject
+                          </button>
+                        </div>
+                      ) : null}
+                    </div>
+                  );
+                })}
               </div>
             </section>
 

@@ -1,7 +1,7 @@
 import { useState } from "react"
 import { apiPost } from "../services/api"
 import { getValidToken } from "../services/auth"
-import { getLostItemMatches } from "../services/carryfreeApi"
+import { createClaim, getLostItemMatches } from "../services/carryfreeApi"
 
 const emptyForm = {
     title: "",
@@ -32,6 +32,12 @@ function ReportLost() {
     const [matches, setMatches] = useState([])
     const [matchesLoading, setMatchesLoading] = useState(false)
     const [matchesError, setMatchesError] = useState("")
+    const [createdLostItemId, setCreatedLostItemId] = useState(null)
+    const [claimingFoundItemId, setClaimingFoundItemId] = useState(null)
+    const [claimedFoundItemId, setClaimedFoundItemId] = useState(null)
+    const [claimMessage, setClaimMessage] = useState("")
+    const [claimLoading, setClaimLoading] = useState(false)
+    const [claimError, setClaimError] = useState("")
 
     const handleChange = (event) => {
         const { name, value } = event.target
@@ -57,6 +63,7 @@ function ReportLost() {
             const response = await apiPost("/lost-items", formData, token)
             const createdLostItem = response.data
             const lostItemId = createdLostItem?._id || createdLostItem?.id
+            setCreatedLostItemId(lostItemId)
 
             setMessage("Lost item reported successfully")
             setFormData(emptyForm)
@@ -80,6 +87,31 @@ function ReportLost() {
             setError(submitError.message || "Failed to report lost item")
         } finally {
             setLoading(false)
+        }
+    }
+
+    const handleClaimSubmit = async (foundItemId) => {
+        const token = getValidToken()
+        if (!token || !createdLostItemId || !foundItemId) {
+            return
+        }
+
+        setClaimLoading(true)
+        setClaimError("")
+
+        try {
+            await createClaim({
+                lostItemId: createdLostItemId,
+                foundItemId,
+                message: claimMessage,
+            }, token)
+            setClaimedFoundItemId(foundItemId)
+            setClaimingFoundItemId(null)
+            setClaimMessage("")
+        } catch (claimErr) {
+            setClaimError(claimErr.message || "Failed to submit claim")
+        } finally {
+            setClaimLoading(false)
         }
     }
 
@@ -226,6 +258,38 @@ function ReportLost() {
                                                         <ul>
                                                             {match.reasons.map((reason) => <li key={reason}>{reason}</li>)}
                                                         </ul>
+                                                    </div>
+                                                ) : null}
+
+                                                {foundItem.status === "found" ? (
+                                                    <div className="claim-action-area">
+                                                        {claimedFoundItemId === foundItem._id ? (
+                                                            <p className="message success">Claim submitted! The finder will review your request.</p>
+                                                        ) : claimingFoundItemId === foundItem._id ? (
+                                                            <div className="claim-form-inline">
+                                                                <label className="field-label">Verify this is your item</label>
+                                                                <textarea
+                                                                    rows="2"
+                                                                    className="modern-input"
+                                                                    placeholder="Describe how you can prove this is yours (serial number, unique markings, etc.)"
+                                                                    value={claimMessage}
+                                                                    onChange={(e) => setClaimMessage(e.target.value)}
+                                                                />
+                                                                {claimError ? <p className="message error">{claimError}</p> : null}
+                                                                <div className="claim-form-actions">
+                                                                    <button type="button" className="primary-btn small-btn" disabled={claimLoading || !claimMessage.trim()} onClick={() => handleClaimSubmit(foundItem._id)}>
+                                                                        {claimLoading ? "Submitting..." : "Submit Claim"}
+                                                                    </button>
+                                                                    <button type="button" className="secondary-btn small-btn" onClick={() => { setClaimingFoundItemId(null); setClaimMessage(""); setClaimError(""); }} disabled={claimLoading}>
+                                                                        Cancel
+                                                                    </button>
+                                                                </div>
+                                                            </div>
+                                                        ) : (
+                                                            <button type="button" className="primary-btn small-btn claim-btn" onClick={() => { setClaimingFoundItemId(foundItem._id); setClaimError(""); }}>
+                                                                Claim This Item
+                                                            </button>
+                                                        )}
                                                     </div>
                                                 ) : null}
                                             </div>

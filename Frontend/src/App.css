@@ -825,6 +825,41 @@ textarea.modern-input {
   font-weight: 700;
 }
 
+.claim-action-area {
+  margin-top: 12px;
+  padding-top: 12px;
+  border-top: 1px solid rgba(28, 36, 52, 0.08);
+}
+
+.claim-btn {
+  background: linear-gradient(135deg, rgba(95, 75, 255, 0.12), rgba(45, 109, 246, 0.12));
+  color: var(--royal-iris);
+  border: 1px solid rgba(95, 75, 255, 0.2);
+}
+
+.claim-form-inline {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.claim-form-actions {
+  display: flex;
+  gap: 10px;
+}
+
+.claim-card-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.claim-card {
+  flex-direction: column;
+  align-items: stretch;
+}
+
 @media (max-width: 980px) {
   .auth-shell,
   .studio-shell {

@@ -44,3 +44,12 @@ export const addTrackingUpdate = (bookingId, payload, token) =>
 
 export const getTrackingHistory = (bookingId, token) =>
   apiGet(`/tracking/${bookingId}/history`, token);
+
+export const createClaim = (payload, token) =>
+  apiPost("/claims", payload, token);
+
+export const getReceivedClaims = (token) =>
+  apiGet("/claims/received", token);
+
+export const updateClaimStatus = (claimId, status, token) =>
+  apiPatch(`/claims/${claimId}`, { status }, token);
