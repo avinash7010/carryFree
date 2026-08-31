@@ -1,19 +1,36 @@
 import { useState } from "react"
 import { apiPost } from "../services/api"
 import { getValidToken } from "../services/auth"
+import { getFoundItemMatches } from "../services/carryfreeApi"
+
+const emptyForm = {
+    title: "",
+    category: "",
+    color: "",
+    dateFound: "",
+    location: "",
+    description: "",
+}
+
+const formatDate = (dateValue) => {
+    if (!dateValue) {
+        return "Not provided"
+    }
+
+    const date = new Date(dateValue)
+    return Number.isNaN(date.getTime())
+        ? dateValue
+        : date.toLocaleDateString(undefined, { year: "numeric", month: "short", day: "numeric" })
+}
 
 function ReportFound() {
-    const [formData, setFormData] = useState({
-        title: "",
-        category: "",
-        color: "",
-        dateFound: "",
-        location: "",
-        description: "",
-    })
+    const [formData, setFormData] = useState(emptyForm)
     const [loading, setLoading] = useState(false)
     const [message, setMessage] = useState("")
     const [error, setError] = useState("")
+    const [matches, setMatches] = useState([])
+    const [matchesLoading, setMatchesLoading] = useState(false)
+    const [matchesError, setMatchesError] = useState("")
 
     const handleChange = (event) => {
         const { name, value } = event.target
@@ -25,6 +42,8 @@ function ReportFound() {
         setLoading(true)
         setMessage("")
         setError("")
+        setMatches([])
+        setMatchesError("")
 
         const token = getValidToken()
         if (!token) {
@@ -34,16 +53,28 @@ function ReportFound() {
         }
 
         try {
-            await apiPost("/found-items", formData, token)
+            const response = await apiPost("/found-items", formData, token)
+            const createdFoundItem = response.data
+            const foundItemId = createdFoundItem?._id || createdFoundItem?.id
+
             setMessage("Found item reported successfully")
-            setFormData({
-                title: "",
-                category: "",
-                color: "",
-                dateFound: "",
-                location: "",
-                description: "",
-            })
+            setFormData(emptyForm)
+
+            if (!foundItemId) {
+                setMatchesError("Your report was created successfully, but possible lost-item matches could not be loaded right now")
+                return
+            }
+
+            setMatchesLoading(true)
+
+            try {
+                const matchResponse = await getFoundItemMatches(foundItemId, token)
+                setMatches(matchResponse.data?.matches || [])
+            } catch (matchError) {
+                setMatchesError("Your report was created successfully, but possible lost-item matches could not be loaded right now")
+            } finally {
+                setMatchesLoading(false)
+            }
         } catch (submitError) {
             setError(submitError.message || "Failed to report found item")
         } finally {
@@ -118,6 +149,85 @@ function ReportFound() {
                         {error ? <p className="message error">{error}</p> : null}
                         <button type="submit" className="primary-btn auth-submit" disabled={loading}>{loading ? "Submitting..." : "Submit Report"}</button>
                     </form>
+
+                    {matchesLoading ? (
+                        <section className="matches-panel" aria-live="polite">
+                            <div className="panel-title-row">
+                                <div>
+                                    <span className="mini-label">Potential matches</span>
+                                    <h3>Checking Lost Items</h3>
+                                </div>
+                            </div>
+                            <p className="default-state">Looking for lost items that may match this found item...</p>
+                        </section>
+                    ) : null}
+
+                    {matchesError ? <p className="message warning">{matchesError}</p> : null}
+
+                    {!matchesLoading && !matchesError && matches.length === 0 && message ? (
+                        <section className="matches-panel" aria-live="polite">
+                            <div className="panel-title-row">
+                                <div>
+                                    <span className="mini-label">Potential matches</span>
+                                    <h3>No Potential Matches Yet</h3>
+                                </div>
+                            </div>
+                            <p className="default-state">These are possible lost-item matches. No potential matches are available right now.</p>
+                        </section>
+                    ) : null}
+
+                    {!matchesLoading && matches.length > 0 ? (
+                        <section className="matches-panel" aria-live="polite">
+                            <div className="panel-title-row">
+                                <div>
+                                    <span className="mini-label">Potential matches</span>
+                                    <h3>Potential Matches</h3>
+                                </div>
+                                <span className="status-badge neutral">{matches.length} possible</span>
+                            </div>
+                            <p className="matches-intro">These are possible lost-item matches.</p>
+
+                            <div className="matches-list">
+                                {matches.map((match) => {
+                                    const lostItem = match.lostItem || {}
+
+                                    return (
+                                        <article key={lostItem._id || `${lostItem.title}-${match.score}`} className="potential-match-card">
+                                            {lostItem.image ? (
+                                                <img className="match-found-image" src={lostItem.image} alt={lostItem.title || "Lost item"} />
+                                            ) : null}
+                                            <div className="match-card-content">
+                                                <div className="match-card-heading">
+                                                    <div>
+                                                        <span className="item-status lost">Lost item</span>
+                                                        <h4>{lostItem.title || "Untitled lost item"}</h4>
+                                                    </div>
+                                                    <div className="match-score" aria-label={`Match score ${match.score}`}>
+                                                        <strong>{match.score}</strong>
+                                                        <span>{String(match.level || "").replace(/_/g, " ")}</span>
+                                                    </div>
+                                                </div>
+                                                <div className="item-meta match-item-meta">
+                                                    <span><strong>Category:</strong> {lostItem.category || "Not provided"}</span>
+                                                    <span><strong>Last seen at:</strong> {lostItem.location || "Not provided"}</span>
+                                                    <span><strong>Date lost:</strong> {formatDate(lostItem.dateLost)}</span>
+                                                    {lostItem.color ? <span><strong>Color:</strong> {lostItem.color}</span> : null}
+                                                </div>
+                                                {match.reasons?.length > 0 ? (
+                                                    <div className="match-reasons">
+                                                        <strong>Why it may match</strong>
+                                                        <ul>
+                                                            {match.reasons.map((reason) => <li key={reason}>{reason}</li>)}
+                                                        </ul>
+                                                    </div>
+                                                ) : null}
+                                            </div>
+                                        </article>
+                                    )
+                                })}
+                            </div>
+                        </section>
+                    ) : null}
                 </div>
             </div>
         </div>

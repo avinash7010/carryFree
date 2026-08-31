@@ -1,5 +1,6 @@
 import FoundItem from "../models/FoundItem.js";
 import { successResponse, errorResponse } from "../utils/apiResponse.js";
+import { notifyMatchesForFoundItem } from "../services/lostFoundMatchNotification.service.js";
 
 export const createFoundItem = async (req, res) => {
   try {
@@ -17,6 +18,8 @@ export const createFoundItem = async (req, res) => {
       ...req.body,
       createdBy: req.user.id,
     });
+
+    void notifyMatchesForFoundItem(foundItem);
 
     return successResponse(
       res,

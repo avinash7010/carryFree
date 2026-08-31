@@ -1,19 +1,36 @@
 import { useState } from "react"
 import { apiPost } from "../services/api"
 import { getValidToken } from "../services/auth"
+import { getLostItemMatches } from "../services/carryfreeApi"
+
+const emptyForm = {
+    title: "",
+    category: "",
+    color: "",
+    dateLost: "",
+    location: "",
+    description: "",
+}
+
+const formatDate = (dateValue) => {
+    if (!dateValue) {
+        return "Not provided"
+    }
+
+    const date = new Date(dateValue)
+    return Number.isNaN(date.getTime())
+        ? dateValue
+        : date.toLocaleDateString(undefined, { year: "numeric", month: "short", day: "numeric" })
+}
 
 function ReportLost() {
-    const [formData, setFormData] = useState({
-        title: "",
-        category: "",
-        color: "",
-        dateLost: "",
-        location: "",
-        description: "",
-    })
+    const [formData, setFormData] = useState(emptyForm)
     const [loading, setLoading] = useState(false)
     const [message, setMessage] = useState("")
     const [error, setError] = useState("")
+    const [matches, setMatches] = useState([])
+    const [matchesLoading, setMatchesLoading] = useState(false)
+    const [matchesError, setMatchesError] = useState("")
 
     const handleChange = (event) => {
         const { name, value } = event.target
@@ -25,6 +42,8 @@ function ReportLost() {
         setLoading(true)
         setMessage("")
         setError("")
+        setMatches([])
+        setMatchesError("")
 
         const token = getValidToken()
         if (!token) {
@@ -34,16 +53,28 @@ function ReportLost() {
         }
 
         try {
-            await apiPost("/lost-items", formData, token)
+            const response = await apiPost("/lost-items", formData, token)
+            const createdLostItem = response.data
+            const lostItemId = createdLostItem?._id || createdLostItem?.id
+
             setMessage("Lost item reported successfully")
-            setFormData({
-                title: "",
-                category: "",
-                color: "",
-                dateLost: "",
-                location: "",
-                description: "",
-            })
+            setFormData(emptyForm)
+
+            if (!lostItemId) {
+                setMatchesError("Your report was created successfully, but matches could not be loaded right now")
+                return
+            }
+
+            setMatchesLoading(true)
+
+            try {
+                const matchResponse = await getLostItemMatches(lostItemId, token)
+                setMatches(matchResponse.data?.matches || [])
+            } catch (matchError) {
+                setMatchesError("Your report was created successfully, but matches could not be loaded right now")
+            } finally {
+                setMatchesLoading(false)
+            }
         } catch (submitError) {
             setError(submitError.message || "Failed to report lost item")
         } finally {
@@ -118,6 +149,85 @@ function ReportLost() {
                         {error ? <p className="message error">{error}</p> : null}
                         <button type="submit" className="primary-btn auth-submit" disabled={loading}>{loading ? "Submitting..." : "Submit Report"}</button>
                     </form>
+
+                    {matchesLoading ? (
+                        <section className="matches-panel" aria-live="polite">
+                            <div className="panel-title-row">
+                                <div>
+                                    <span className="mini-label">Potential matches</span>
+                                    <h3>Checking Found Items</h3>
+                                </div>
+                            </div>
+                            <p className="default-state">Looking for items that may match your lost item...</p>
+                        </section>
+                    ) : null}
+
+                    {matchesError ? <p className="message warning">{matchesError}</p> : null}
+
+                    {!matchesLoading && !matchesError && matches.length === 0 && message ? (
+                        <section className="matches-panel" aria-live="polite">
+                            <div className="panel-title-row">
+                                <div>
+                                    <span className="mini-label">Potential matches</span>
+                                    <h3>No Potential Matches Yet</h3>
+                                </div>
+                            </div>
+                            <p className="default-state">These items may match your lost item. No potential matches are available right now.</p>
+                        </section>
+                    ) : null}
+
+                    {!matchesLoading && matches.length > 0 ? (
+                        <section className="matches-panel" aria-live="polite">
+                            <div className="panel-title-row">
+                                <div>
+                                    <span className="mini-label">Potential matches</span>
+                                    <h3>Potential Matches</h3>
+                                </div>
+                                <span className="status-badge neutral">{matches.length} found</span>
+                            </div>
+                            <p className="matches-intro">These items may match your lost item.</p>
+
+                            <div className="matches-list">
+                                {matches.map((match) => {
+                                    const foundItem = match.foundItem || {}
+
+                                    return (
+                                        <article key={foundItem._id || `${foundItem.title}-${match.score}`} className="potential-match-card">
+                                            {foundItem.image ? (
+                                                <img className="match-found-image" src={foundItem.image} alt={foundItem.title || "Found item"} />
+                                            ) : null}
+                                            <div className="match-card-content">
+                                                <div className="match-card-heading">
+                                                    <div>
+                                                        <span className="item-status found">Found item</span>
+                                                        <h4>{foundItem.title || "Untitled found item"}</h4>
+                                                    </div>
+                                                    <div className="match-score" aria-label={`Match score ${match.score}`}>
+                                                        <strong>{match.score}</strong>
+                                                        <span>{String(match.level || "").replace(/_/g, " ")}</span>
+                                                    </div>
+                                                </div>
+                                                <div className="item-meta match-item-meta">
+                                                    <span><strong>Category:</strong> {foundItem.category || "Not provided"}</span>
+                                                    <span><strong>Found at:</strong> {foundItem.location || "Not provided"}</span>
+                                                    <span><strong>Date found:</strong> {formatDate(foundItem.dateFound)}</span>
+                                                    {foundItem.color ? <span><strong>Color:</strong> {foundItem.color}</span> : null}
+                                                </div>
+                                                {match.reasons?.length > 0 ? (
+                                                    <div className="match-reasons">
+                                                        <strong>Why it may match</strong>
+                                                        <ul>
+                                                            {match.reasons.map((reason) => <li key={reason}>{reason}</li>)}
+                                                        </ul>
+                                                    </div>
+                                                ) : null}
+                                            </div>
+                                        </article>
+                                    )
+                                })}
+                            </div>
+                        </section>
+                    ) : null}
                 </div>
             </div>
         </div>

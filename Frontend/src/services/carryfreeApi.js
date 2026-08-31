@@ -2,6 +2,10 @@ import { apiGet, apiPatch, apiPost } from "./api";
 
 export const createPackage = (payload, token) => apiPost("/packages", payload, token);
 export const createTrip = (payload, token) => apiPost("/trips", payload, token);
+export const getLostItemMatches = (lostItemId, token) =>
+  apiGet(`/match/lost/${lostItemId}`, token);
+export const getFoundItemMatches = (foundItemId, token) =>
+  apiGet(`/match/found/${foundItemId}`, token);
 
 export const getMyPackages = (token) => apiGet("/packages/my", token);
 export const getMyTrips = (token) => apiGet("/trips/my", token);

@@ -1,0 +1,4 @@
+node_modules/
+.env
+*.log
+Backend/e2e/artifacts/

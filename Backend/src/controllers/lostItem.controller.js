@@ -1,5 +1,6 @@
 import LostItem from "../models/LostItem.js";
 import { successResponse, errorResponse } from "../utils/apiResponse.js";
+import { notifyMatchesForLostItem } from "../services/lostFoundMatchNotification.service.js";
 
 export const createLostItem = async (req, res) => {
   try {
@@ -17,6 +18,8 @@ export const createLostItem = async (req, res) => {
       ...req.body,
       createdBy: req.user.id,
     });
+
+    void notifyMatchesForLostItem(lostItem);
 
     return successResponse(
       res,
