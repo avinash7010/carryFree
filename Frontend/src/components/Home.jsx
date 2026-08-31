@@ -1,191 +1,297 @@
-import Robo from '../assets/robo.png';
+import { useEffect, useState } from "react"
 import { Link } from "react-router-dom"
 
+const featureCards = [
+  {
+    icon: "🎯",
+    title: "Honor-led reporting",
+    description:
+      "Let the community report losses and finds with honest details, real context, and fast visibility.",
+    tag: "Integrity first",
+    tone: "feature-card--iris",
+  },
+  {
+    icon: "🧠",
+    title: "Smart matching",
+    description:
+      "AI-assisted item clustering and proximity signals connect the right people without exposing sensitive data.",
+    tag: "Fast & secure",
+    tone: "feature-card--blue",
+  },
+  {
+    icon: "🛡️",
+    title: "Safe community trust",
+    description:
+      "Protect users with verified interactions, clear fundamentals, and a trusted in-network contact flow.",
+    tag: "Built on trust",
+    tone: "feature-card--emerald",
+  },
+]
+
+const processSteps = [
+  { number: "01", label: "Post it" },
+  { number: "02", label: "Match it" },
+  { number: "03", label: "Recover it" },
+]
+
+const trustPills = ["Campus-safe", "Private by design", "Community-first", "Instant updates"]
+
 function Home() {
-    return (
-        <div id="Home" className="d-flex flex-column w-90 mx-4 mx-md-2 mb-2 px-4 py-2 rounded border border-primary">
-            <div className="home d-none d-lg-flex">
-                <div className="mx-4 text-center home-in">
-                    <h1 className="h1 display-3 fw-bold">Never Lose Track Again</h1>
-                    <p className="fw-medium text-center">CarryFree connects you with your lost items across colleges, offices, and schools. Built on trust, powered by community honor. Lorem ipsum dolor sit amet consectetur adipisicing elit. Hic, delectus. Velit eos accusamus, autem optio nihil recusandae doloremque consequuntur consequatur animi eaque nobis id similique?</p>
-                    <div className="py-4 px-5 dw">
-                        <span className="spinner-grow spinner-grow-sm mt-1 me-2 bg-warning" aria-hidden="true"></span>
-                        <span className="me-3">Trusted Community</span>
-                        <span className="spinner-grow spinner-grow-sm mt-1 me-2 bg-danger" aria-hidden="true"></span>
-                        <span className="me-3">Honor-Based System</span>
-                        <span className="spinner-grow spinner-grow-sm mt-1 me-2 bg-primary" aria-hidden="true"></span>
-                        <span>Secure Connections</span>
-                    </div>
-                    <div className="d-flex gap-3 my-4">
-                        <Link to="/report-lost" className="btn btn-primary btn-lg px-4 py-3">
-                            🔍 Report Lost Item
-                        </Link>
-                        <Link to="report-found" className="btn btn-outline-primary btn-lg px-4 py-3">
-                            ✨ Report Found Item
-                        </Link>
-                    </div>
-                </div>
-                <div className="robo-wrapper">
-                    <img src={Robo} alt="robo" className="robo-img" />
-                </div>
-            </div>
+  const [scrollProgress, setScrollProgress] = useState(0)
 
-            <div className="home d-flex d-lg-none flex-column position-relative">
-                <h1 className="h1 display-4 display-md-1 fw-bold text-center mt-3 text-primary">Never Lose Track Again</h1>
-                <div className="robo-wrapper">
-                    <img src={Robo} alt="robo" className="robo-img ms-5" />
-                </div>
-                <div className="text-center home-in">
-                    <p className="fw-medium text-center">CarryFree connects you with your lost items across colleges, offices, and schools. Built on trust, powered by community honor. Lorem ipsum dolor sit amet consectetur adipisicing elit. Hic, delectus. Velit eos accusamus, autem optio nihil recusandae doloremque consequuntur consequatur animi eaque nobis id similique?</p>
-                    <div className="w-100 dw d-flex flex-column gap-3 align-items-center">
-                        <span className="px-3 py-2 border border-primary border-2 w-100 bg-primary-subtle">
-                            <span className="spinner-grow spinner-grow-sm me-2 bg-warning" aria-hidden="true"></span>
-                            <span>Trusted Community</span>
-                        </span>
-                        <span className="px-3 py-2 border border-primary border-2 w-100 bg-primary-subtle">
-                            <span className="spinner-grow spinner-grow-sm me-2 bg-danger" aria-hidden="true"></span>
-                            <span>Honor-Based System</span>
-                        </span>
-                        <span className="px-3 py-2 border border-primary border-2 w-100 bg-primary-subtle">
-                            <span className="spinner-grow spinner-grow-sm me-2 bg-primary" aria-hidden="true"></span>
-                            <span>Secure Connections</span>
-                        </span>
-                    </div>
-                    <div className="d-flex gap-3 my-4">
-                        <Link to="/report-lost" className="btn btn-primary btn-lg px-4 py-3">
-                            🔍 Report Lost Item
-                        </Link>
-                        <Link to="report-found" className="btn btn-outline-primary btn-lg px-4 py-3">
-                            ✨ Report Found Item
-                        </Link>
-                    </div>
-                </div>
-            </div>
+  useEffect(() => {
+    const revealItems = document.querySelectorAll(".reveal")
 
-            <div className="features-section">
-                <div className="container">
-                    <h3 className="section-title">How CarryFree Works</h3>
-                    <p className="section-description">A community built on trust, integrity, and mutual respect</p>
-                    <div className="features-grid">
-                        <div className="feature-card">
-                            <div className="feature-icon-wrapper purple-to-blue">
-                                <span className="feature-icon">🎯</span>
-                            </div>
-                            <h4 className="feature-card-title">Honor-Based Reporting</h4>
-                            <p className="feature-card-description">Report lost or found items with complete honesty. Our
-                                community thrives on truthful, detailed descriptions and genuine intentions.</p>
-                            <div className="feature-tag-wrapper">
-                                <span className="feature-tag purple-tag">Integrity First</span>
-                            </div>
-                        </div>
-                        <div className="feature-card">
-                            <div className="feature-icon-wrapper blue-to-green">
-                                <span className="feature-icon">🤖</span>
-                            </div>
-                            <h4 className="feature-card-title">Intelligent Matching</h4>
-                            <p className="feature-card-description">Advanced algorithms match lost and found items while
-                                maintaining privacy. Only verified community members can access contact information.</p>
-                            <div className="feature-tag-wrapper">
-                                <span className="feature-tag blue-tag">Smart & Secure</span>
-                            </div>
-                        </div>
-                        <div className="feature-card">
-                            <div className="feature-icon-wrapper green-to-purple">
-                                <span className="feature-icon">🛡️</span>
-                            </div>
-                            <h4 className="feature-card-title">Trusted Connections</h4>
-                            <p className="feature-card-description">Connect with fellow community members through our secure
-                                system. Every interaction is logged and protected by our honor code commitment.</p>
-                            <div className="feature-tag-wrapper">
-                                <span className="feature-tag green-tag">Community Trust</span>
-                            </div>
-                        </div>
-                    </div>
+    const observer = new IntersectionObserver(
+      (entries) => {
+        entries.forEach((entry) => {
+          if (entry.isIntersecting) {
+            entry.target.classList.add("is-visible")
+          }
+        })
+      },
+      { threshold: 0.2 }
+    )
 
-                    <div className="honor-code-section border border-primary border-3 bg-primary-subtle">
-                        <div className="honor-code-content">
-                            <div className="honor-code-icon-wrapper d-flex align-items-center justify-content-center bg-primary">
-                                <span className="honor-code-icon">⚖️</span>
-                            </div>
-                            <h4 className="honor-code-title">Our Community Honor Code</h4>
-                            <p className="honor-code-description">
-                                Every CarryFree member pledges to act with honesty, respect, and integrity. We believe that
-                                lost items should be returned to their rightful owners, and found items should be reported
-                                promptly. Together, we build a community where trust prevails.
-                            </p>
-                            <div className="honor-code-tags d-flex justify-content-center flex-wrap">
-                                <span className="honor-tag bg-white border border-primary border-1">🤝 Honest Reporting</span>
-                                <span className="honor-tag bg-white border border-primary border-1">🔒 Privacy Respect</span>
-                                <span className="honor-tag bg-white border border-primary border-1">⚡ Prompt Action</span>
-                                <span className="honor-tag bg-white border border-primary border-1">💝 Community Care</span>
-                            </div>
-                        </div>
-                    </div>
+    revealItems.forEach((item) => observer.observe(item))
 
-                    <footer className="bg-primary-subtle border-top border-primary mt-5 pt-5 px-5">
-                        <div className="container">
+    const handleScroll = () => {
+      const nextProgress = Math.min(window.scrollY / 650, 1)
+      setScrollProgress(nextProgress)
+    }
 
-                            <div className="row text-start mb-4">
-                                <div className="col-12">
-                                    <h5 className="fw-bold text-primary">CarryFree</h5>
-                                    <p className="text-secondary">
-                                        A community-driven platform to report and find lost items inside institutions.
-                                        Connect, report, and reunite with your belongings easily.
-                                    </p>
-                                </div>
-                            </div>
+    handleScroll()
+    window.addEventListener("scroll", handleScroll, { passive: true })
 
-                            <div className="row text-start">
-                                <div className="col-md-3 mb-4">
-                                    <h6 className="fw-bold text-primary">Quick Links</h6>
-                                    <ul className="list-unstyled">
-                                        <li><Link to="/" className="text-decoration-none text-secondary ql">Home</Link></li>
-                                        <li><Link to="/report-lost" className="text-decoration-none text-secondary ql">Report Lost</Link></li>
-                                        <li><Link to="/report-found" className="text-decoration-none text-secondary ql">Report Found</Link></li>
-                                        <li><Link to="/browse-items" className="text-decoration-none text-secondary ql">Browse Items</Link></li>
-                                        <li><Link to="/login" className="text-decoration-none text-secondary ql">Login</Link></li>
-                                    </ul>
-                                </div>
+    return () => {
+      observer.disconnect()
+      window.removeEventListener("scroll", handleScroll)
+    }
+  }, [])
 
-                                <div className="col-md-3 mb-4">
-                                    <h6 className="fw-bold text-primary">Resources</h6>
-                                    <ul className="list-unstyled">
-                                        <li><a href="#" className="text-decoration-none text-secondary ql">FAQs</a></li>
-                                        <li><a href="#" className="text-decoration-none text-secondary ql">Community Guidelines</a></li>
-                                        <li><a href="#" className="text-decoration-none text-secondary ql">Help Center</a></li>
-                                        <li><a href="#" className="text-decoration-none text-secondary ql">Support</a></li>
-                                    </ul>
-                                </div>
+  const motionLift = scrollProgress * 48
 
-                                <div className="col-md-3 mb-4">
-                                    <h6 className="fw-bold text-primary">Contact Us</h6>
-                                    <p className="text-secondary mb-1"><i className="bi bi-geo-alt-fill text-primary"></i> Chennai, Tamil Nadu, India</p>
-                                    <p className="text-secondary mb-1"><i className="bi bi-envelope-fill text-primary"></i> support@carryfree.com</p>
-                                    <p className="text-secondary mb-1"><i className="bi bi-telephone-fill text-primary"></i> +91 98765 43210</p>
-                                </div>
+  return (
+    <div id="Home" className="home-page-shell">
+      <section className="hero-section">
+        <div className="hero-copy reveal">
+          <span className="eyebrow-chip">
+            <span className="pulse-dot" />
+            Trusted by modern communities
+          </span>
+          <h1>Bring lost items back home.</h1>
+          <p>
+            CarryFree helps students, teams, and campuses recover valuables with quick reporting,
+            smarter matching, and a privacy-first trust network built for real life.
+          </p>
 
-                                <div className="col-md-3 mb-4">
-                                    <h6 className="fw-bold text-primary">Follow Us</h6>
-                                    <div className="d-flex gap-3">
-                                        <a href="#" className="text-primary fs-4"><i className="bi bi-facebook"></i></a>
-                                        <a href="#" className="text-primary fs-4"><i className="bi bi-twitter"></i></a>
-                                        <a href="#" className="text-primary fs-4"><i className="bi bi-instagram"></i></a>
-                                        <a href="#" className="text-primary fs-4"><i className="bi bi-linkedin"></i></a>
-                                    </div>
-                                </div>
-                            </div>
+          <div className="cta-row">
+            <Link to="/report-lost" className="primary-btn">
+              Report lost item
+            </Link>
+            <Link to="/report-found" className="secondary-btn">
+              Report found item
+            </Link>
+          </div>
 
-                            <div className="text-center border-top border-primary pt-3 pb-2 mt-3">
-                                <p className="mb-0 text-secondary">
-                                    © 2025 CarryFree. All Rights Reserved. | Made with ❤️ by Artist
-                                </p>
-                            </div>
-                        </div>
-                    </footer>
-                </div>
-            </div>
+          <div className="trust-row">
+            {trustPills.map((pill) => (
+              <span key={pill} className="trust-pill">
+                {pill}
+              </span>
+            ))}
+          </div>
         </div>
-    );
+
+        <div className="hero-visual reveal" style={{ transform: `translateY(${motionLift}px)` }}>
+          <div className="video-screen">
+            <div className="screen-topbar">
+              <span className="live-pill">Live matching</span>
+              <span className="mini-status">3m ago</span>
+            </div>
+
+            <div className="screen-panel">
+              <div className="scan-orbit" />
+
+              <div className="product-visual-card">
+                <div className="window-top">
+                  <span className="window-dot blue" />
+                  <span className="window-dot yellow" />
+                  <span className="window-dot green" />
+                </div>
+
+                <div className="product-header-row">
+                  <span className="mini-tag">Route match</span>
+                  <span className="mini-tag alt">Live</span>
+                </div>
+
+                <div className="route-map">
+                  <div className="route-line" />
+                  <span className="route-pin start">Campus</span>
+                  <span className="route-pin end">Airport</span>
+                  <div className="package-pill">Black wallet</div>
+                </div>
+
+                <div className="summary-grid">
+                  <div className="summary-item">
+                    <span>Match score</span>
+                    <strong>96%</strong>
+                  </div>
+                  <div className="summary-item">
+                    <span>ETA</span>
+                    <strong>12 min</strong>
+                  </div>
+                </div>
+              </div>
+
+              <div className="float-card float-card-left">
+                <strong>2,430</strong>
+                <span>Recovered this month</span>
+              </div>
+
+              <div className="float-card float-card-right">
+                <span className="dot-green" />
+                Match ready
+              </div>
+            </div>
+
+            <div className="ticker-row">
+              <span>Signal Blue</span>
+              <span>Porcelain</span>
+              <span>Royal Iris</span>
+              <span>Emerald Ink</span>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section className="stats-strip reveal">
+        <div className="stat-card">
+          <strong>92%</strong>
+          <span>match success rate</span>
+        </div>
+        <div className="stat-card">
+          <strong>14k+</strong>
+          <span>items reported</span>
+        </div>
+        <div className="stat-card">
+          <strong>4.9/5</strong>
+          <span>community trust</span>
+        </div>
+        <div className="stat-card">
+          <strong>24/7</strong>
+          <span>item visibility</span>
+        </div>
+      </section>
+
+      <section className="feature-section reveal">
+        <div className="section-heading">
+          <span className="section-kicker">Why it works</span>
+          <h2>Designed for fast recovery and calm confidence.</h2>
+        </div>
+
+        <div className="feature-grid">
+          {featureCards.map((feature) => (
+            <article key={feature.title} className={`feature-card ${feature.tone}`}>
+              <div className="feature-icon-wrap">
+                <span>{feature.icon}</span>
+              </div>
+              <h3>{feature.title}</h3>
+              <p>{feature.description}</p>
+              <span className="feature-tag">{feature.tag}</span>
+            </article>
+          ))}
+        </div>
+      </section>
+
+      <section className="process-section reveal">
+        <div className="section-heading align-left">
+          <span className="section-kicker">Simple flow</span>
+          <h2>From report to reunion in three steps.</h2>
+        </div>
+
+        <div className="process-grid">
+          {processSteps.map((step) => (
+            <div key={step.number} className="process-card">
+              <span className="step-number">{step.number}</span>
+              <h3>{step.label}</h3>
+              <p>
+                {step.number === "01" && "Add a clear description, image, and last-seen details in seconds."}
+                {step.number === "02" && "Our matching logic surfaces the closest credible leads and signals in your network."}
+                {step.number === "03" && "Confirm ownership, connect safely, and get your item back to the right place."}
+              </p>
+            </div>
+          ))}
+        </div>
+      </section>
+
+      <section className="story-band reveal">
+        <div className="story-copy">
+          <span className="section-kicker">Built around people</span>
+          <h2>Fresh design, honest trust, and safer handoff moments.</h2>
+          <p>
+            We designed CarryFree to feel calm, human, and premium while keeping every step secure,
+            respectful, and easy to use from any device.
+          </p>
+          <div className="story-checklist">
+            <span>✔ Verified contact flow</span>
+            <span>✔ Privacy-first reporting</span>
+            <span>✔ Community-based follow-up</span>
+          </div>
+        </div>
+
+        <div className="story-visual">
+          <div className="mini-panel panel-large">
+            <div className="mini-top">
+              <span className="mini-bubble" />
+              <span className="mini-bubble darker" />
+              <span className="mini-bubble" />
+            </div>
+            <div className="chart-bars">
+              <span style={{ height: "42%" }} />
+              <span style={{ height: "66%" }} />
+              <span style={{ height: "54%" }} />
+              <span style={{ height: "82%" }} />
+              <span style={{ height: "96%" }} />
+            </div>
+          </div>
+          <div className="mini-panel panel-small">
+            <p>Last found item</p>
+            <strong>Black wallet</strong>
+            <span>Matched 2 mins ago</span>
+          </div>
+        </div>
+      </section>
+
+      <section className="cta-section reveal">
+        <div className="cta-card">
+          <div>
+            <span className="section-kicker">Ready to begin?</span>
+            <h2>Keep your valuables close, even when life moves fast.</h2>
+          </div>
+          <div className="cta-actions">
+            <Link to="/report-lost" className="primary-btn">
+              Start now
+            </Link>
+            <Link to="/browse-items" className="secondary-btn">
+              Browse items
+            </Link>
+          </div>
+        </div>
+      </section>
+
+      <footer className="landing-footer">
+        <div className="footer-brand">CarryFree</div>
+        <div className="footer-links">
+          <Link to="/report-lost">Report Lost</Link>
+          <Link to="/report-found">Report Found</Link>
+          <Link to="/browse-items">Browse</Link>
+          <Link to="/login">Login</Link>
+        </div>
+        <p>© 2026 CarryFree • Built for communities that care.</p>
+      </footer>
+    </div>
+  )
 }
 
 export default Home

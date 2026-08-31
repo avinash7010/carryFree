@@ -2,15 +2,41 @@ import Claim from "../models/Claim.js";
 import FoundItem from "../models/FoundItem.js";
 import LostItem from "../models/LostItem.js";
 import { successResponse, errorResponse } from "../utils/apiResponse.js";
+import mongoose from "mongoose";
 
 export const createClaim = async (req, res) => {
   const { lostItemId, foundItemId, message } = req.body;
 
   try {
+    if (!lostItemId || !foundItemId || !message) {
+      return errorResponse(res, "lostItemId, foundItemId, and message are required", 400);
+    }
+
+    if (!mongoose.Types.ObjectId.isValid(lostItemId) || !mongoose.Types.ObjectId.isValid(foundItemId)) {
+      return errorResponse(res, "Invalid lostItemId or foundItemId", 400);
+    }
+
+    const lostItem = await LostItem.findById(lostItemId);
     const foundItem = await FoundItem.findById(foundItemId);
+
+    if (!lostItem) {
+      return errorResponse(res, "Lost item not found", 404);
+    }
 
     if (!foundItem) {
       return errorResponse(res, "Found item not found", 404);
+    }
+
+    if (lostItem.createdBy.toString() !== req.user.id) {
+      return errorResponse(res, "You can only claim against your own lost item", 403);
+    }
+
+    if (lostItem.status !== "lost") {
+      return errorResponse(res, "This lost item is no longer open for claims", 400);
+    }
+
+    if (foundItem.status !== "found") {
+      return errorResponse(res, "This found item is no longer open for claims", 400);
     }
 
     if (foundItem.createdBy.toString() === req.user.id) {
@@ -42,6 +68,10 @@ export const createClaim = async (req, res) => {
       201
     );
   } catch (error) {
+    if (error.name === "ValidationError" || error.name === "CastError") {
+      return errorResponse(res, "Invalid claim payload", 400, error.message);
+    }
+
     return errorResponse(res, "Failed to create claim", 500, error.message);
   }
 };
@@ -51,7 +81,7 @@ export const getReceivedClaims = async (req, res) => {
     const claims = await Claim.find({ finder: req.user.id })
       .populate("lostItem")
       .populate("foundItem")
-      .populate("claimant", "name email")
+      .populate("claimant", "name email role rating totalReviews completedDeliveries")
       .sort({ createdAt: -1 });
 
     return successResponse(res, "Received claims fetched", claims);
@@ -73,6 +103,10 @@ export const updateClaimStatus = async (req, res) => {
   }
 
   try {
+    if (!mongoose.Types.ObjectId.isValid(req.params.id)) {
+      return errorResponse(res, "Invalid claim id", 400);
+    }
+
     const claim = await Claim.findById(req.params.id);
 
     if (!claim) {
@@ -81,6 +115,10 @@ export const updateClaimStatus = async (req, res) => {
 
     if (claim.finder.toString() !== req.user.id) {
       return errorResponse(res, "Unauthorized action", 403);
+    }
+
+    if (claim.status !== "pending") {
+      return errorResponse(res, "Claim is already finalized", 400);
     }
 
     claim.status = status;
@@ -95,6 +133,10 @@ export const updateClaimStatus = async (req, res) => {
 
     return successResponse(res, `Claim ${status} successfully`, claim);
   } catch (error) {
+    if (error.name === "ValidationError" || error.name === "CastError") {
+      return errorResponse(res, "Invalid claim status update payload", 400, error.message);
+    }
+
     return errorResponse(
       res,
       "Failed to update claim status",

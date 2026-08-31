@@ -23,12 +23,20 @@ const lostItemSchema = new mongoose.Schema(
       type: Date,
       required: true,
     },
+    color: {
+      type: String,
+      trim: true,
+    },
+    phone: {
+      type: String,
+      trim: true,
+    },
     image: {
       type: String, // URL (future: Cloudinary)
     },
     status: {
       type: String,
-      enum: ["lost", "found"],
+      enum: ["lost", "found", "claimed"],
       default: "lost",
     },
     createdBy: {

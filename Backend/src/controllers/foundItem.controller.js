@@ -3,6 +3,16 @@ import { successResponse, errorResponse } from "../utils/apiResponse.js";
 
 export const createFoundItem = async (req, res) => {
   try {
+    const { title, description, category, location, dateFound } = req.body;
+
+    if (!title || !description || !category || !location || !dateFound) {
+      return errorResponse(
+        res,
+        "title, description, category, location, and dateFound are required",
+        400
+      );
+    }
+
     const foundItem = await FoundItem.create({
       ...req.body,
       createdBy: req.user.id,
@@ -15,6 +25,10 @@ export const createFoundItem = async (req, res) => {
       201
     );
   } catch (error) {
+    if (error.name === "ValidationError" || error.name === "CastError") {
+      return errorResponse(res, "Invalid found item payload", 400, error.message);
+    }
+
     return errorResponse(res, "Failed to create found item", 500, error.message);
   }
 };
@@ -22,7 +36,7 @@ export const createFoundItem = async (req, res) => {
 export const getAllFoundItems = async (req, res) => {
   try {
     const items = await FoundItem.find()
-      .populate("createdBy", "name email")
+      .populate("createdBy", "name email role rating totalReviews completedDeliveries")
       .sort({ createdAt: -1 });
 
     return successResponse(res, "Found items fetched", items);

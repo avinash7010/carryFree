@@ -3,6 +3,16 @@ import { successResponse, errorResponse } from "../utils/apiResponse.js";
 
 export const createLostItem = async (req, res) => {
   try {
+    const { title, description, category, location, dateLost } = req.body;
+
+    if (!title || !description || !category || !location || !dateLost) {
+      return errorResponse(
+        res,
+        "title, description, category, location, and dateLost are required",
+        400
+      );
+    }
+
     const lostItem = await LostItem.create({
       ...req.body,
       createdBy: req.user.id,
@@ -15,6 +25,10 @@ export const createLostItem = async (req, res) => {
       201
     );
   } catch (error) {
+    if (error.name === "ValidationError" || error.name === "CastError") {
+      return errorResponse(res, "Invalid lost item payload", 400, error.message);
+    }
+
     return errorResponse(res, "Failed to create lost item", 500, error.message);
   }
 };
@@ -22,7 +36,7 @@ export const createLostItem = async (req, res) => {
 export const getAllLostItems = async (req, res) => {
   try {
     const items = await LostItem.find()
-      .populate("createdBy", "name email")
+      .populate("createdBy", "name email role rating totalReviews completedDeliveries")
       .sort({ createdAt: -1 });
 
     return successResponse(res, "Lost items fetched", items);

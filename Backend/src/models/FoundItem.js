@@ -23,6 +23,14 @@ const foundItemSchema = new mongoose.Schema(
       type: Date,
       required: true,
     },
+    color: {
+      type: String,
+      trim: true,
+    },
+    phone: {
+      type: String,
+      trim: true,
+    },
     image: {
       type: String, // URL (future use)
     },

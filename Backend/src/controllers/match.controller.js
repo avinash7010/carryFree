@@ -1,5 +1,7 @@
 import LostItem from "../models/LostItem.js";
 import FoundItem from "../models/FoundItem.js";
+import mongoose from "mongoose";
+import { successResponse, errorResponse } from "../utils/apiResponse.js";
 
 /**
  * @desc Match found items for a lost item
@@ -8,15 +10,19 @@ import FoundItem from "../models/FoundItem.js";
  */
 export const matchLostWithFound = async (req, res) => {
   try {
+    if (!mongoose.Types.ObjectId.isValid(req.params.id)) {
+      return errorResponse(res, "Invalid lost item id", 400);
+    }
+
     const lostItem = await LostItem.findById(req.params.id);
 
     if (!lostItem) {
-      return res.status(404).json({ message: "Lost item not found" });
+      return errorResponse(res, "Lost item not found", 404);
     }
 
     // Only owner can see matches
     if (lostItem.createdBy.toString() !== req.user.id) {
-      return res.status(403).json({ message: "Unauthorized access" });
+      return errorResponse(res, "Unauthorized access", 403);
     }
 
     const matches = await FoundItem.find({
@@ -24,17 +30,18 @@ export const matchLostWithFound = async (req, res) => {
       location: lostItem.location,
       dateFound: { $gte: lostItem.dateLost },
       status: "found",
-    }).populate("createdBy", "name email");
+    }).populate("createdBy", "name email role rating totalReviews completedDeliveries");
 
-    res.json({
+    return successResponse(res, "Matches fetched", {
       lostItem,
       matchCount: matches.length,
       matches,
     });
   } catch (error) {
-    res.status(500).json({
-      message: "Failed to find matches",
-      error: error.message,
-    });
+    if (error.name === "ValidationError" || error.name === "CastError") {
+      return errorResponse(res, "Invalid match request payload", 400, error.message);
+    }
+
+    return errorResponse(res, "Failed to find matches", 500, error.message);
   }
 };

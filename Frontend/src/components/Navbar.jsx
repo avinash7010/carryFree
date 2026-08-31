@@ -1,63 +1,150 @@
-import { Link, useLocation } from "react-router-dom"
+import { useEffect, useState } from "react"
+import { Link, useLocation, useNavigate } from "react-router-dom"
+import { clearToken, getToken, getValidToken } from "../services/auth"
+
+const navItems = [
+  { to: "/", label: "Home" },
+  { to: "/report-lost", label: "Report Lost" },
+  { to: "/report-found", label: "Report Found" },
+  { to: "/post-package", label: "Post Package" },
+  { to: "/post-trip", label: "Post Trip" },
+  { to: "/carry-dashboard", label: "Dashboard" },
+  { to: "/browse-items", label: "Browse Items" },
+]
 
 function Navbar() {
   const location = useLocation()
+  const navigate = useNavigate()
+  const [isLoggedIn, setIsLoggedIn] = useState(Boolean(getValidToken()))
+  const [darkMode, setDarkMode] = useState(() => {
+    const savedTheme = localStorage.getItem("carryfree-theme")
+    return savedTheme ? savedTheme === "dark" : false
+  })
+
+  useEffect(() => {
+    const checkAndSyncAuth = () => {
+      const rawToken = getToken()
+      const validToken = getValidToken()
+      const loggedIn = Boolean(validToken)
+      const sessionExpired = Boolean(rawToken) && !loggedIn
+      setIsLoggedIn(loggedIn)
+
+      if (!loggedIn && !["/login", "/register"].includes(location.pathname)) {
+        navigate("/login", {
+          replace: true,
+          state: sessionExpired
+            ? { authMessage: "Session expired. Please login again." }
+            : undefined,
+        })
+      }
+    }
+
+    checkAndSyncAuth()
+
+    const intervalId = setInterval(checkAndSyncAuth, 30000)
+    window.addEventListener("storage", checkAndSyncAuth)
+
+    return () => {
+      clearInterval(intervalId)
+      window.removeEventListener("storage", checkAndSyncAuth)
+    }
+  }, [location.pathname, navigate])
+
+  useEffect(() => {
+    document.body.dataset.theme = darkMode ? "dark" : "light"
+    localStorage.setItem("carryfree-theme", darkMode ? "dark" : "light")
+  }, [darkMode])
+
+  const handleLogout = () => {
+    clearToken()
+    setIsLoggedIn(false)
+    navigate("/login")
+  }
 
   return (
-    <div className="d-flex w-90 navbar mx-4 mx-md-2 my-3 px-4 py-2 rounded border border-primary">
-      <Link className="navbar-brand fs-3" to="/">CarryFree</Link>
-      <div className="d-lg-flex d-none" role="group" aria-label="Basic radio toggle button group">
-        <Link to="/" className={`btn nav-item mx-2 ${location.pathname === "/" ? "btn-primary" : "btn-outline-primary"}`} >
-          Home
+    <header className="topbar-wrap">
+      <div className="navbar-shell">
+        <Link className="brand-mark" to="/">
+          <span className="brand-icon">CF</span>
+          CarryFree
         </Link>
 
-        <Link to="/report-lost" className={`btn nav-item mx-2 ${location.pathname === "/report-lost" ? "btn-primary" : "btn-outline-primary"}`} >
-          Report Lost
-        </Link>
+        <nav className="nav-links d-none d-lg-flex" aria-label="Main navigation">
+          {navItems.map((item) => (
+            <Link
+              key={item.to}
+              to={item.to}
+              className={`nav-pill ${location.pathname === item.to ? "nav-pill-active" : ""}`}
+            >
+              {item.label}
+            </Link>
+          ))}
+        </nav>
 
-        <Link to="/report-found" className={`btn nav-item mx-2 ${location.pathname === "/report-found" ? "btn-primary" : "btn-outline-primary"}`} >
-          Report Found
-        </Link>
-        <Link to="/browse-items" className={`btn nav-item mx-2 ${location.pathname === "/browse-items" ? "btn-primary" : "btn-outline-primary"}`} >
-          Browse Items
-        </Link>
-      </div>
+        <div className="nav-actions d-none d-lg-flex">
+          <button
+            type="button"
+            className="theme-toggle"
+            onClick={() => setDarkMode((prev) => !prev)}
+            aria-label="Toggle dark mode"
+            title={darkMode ? "Switch to light mode" : "Switch to dark mode"}
+          >
+            <i className={`bi ${darkMode ? "bi-sun-fill" : "bi-moon-fill"}`} />
+            <span>{darkMode ? "Light" : "Dark"}</span>
+          </button>
 
-      <Link to="/login" className="btn btn-primary nav-item d-lg-flex d-none">
-        Login <i className="bi bi-box-arrow-in-right"></i>
-      </Link>
+          {isLoggedIn ? (
+            <button type="button" onClick={handleLogout} className="logout-btn">
+              Logout
+            </button>
+          ) : (
+            <Link to="/login" className="login-btn">
+              Login
+            </Link>
+          )}
+        </div>
 
-      <div className="dropdown d-lg-none d-flex">
-        <button className="dropdown-toggle border border-primary border-2 btn" type="button" data-bs-toggle="dropdown" aria-expanded="false">
-          <i className="bi bi-list fs-5"></i>
-        </button>
-        <div className="dropdown-menu dropdown-menu-end px-2 py-2 mt-2 border border-primary border-2">
-          <input type="radio" className="btn-check" name="btnradio" id="home" autoComplete="off" checked={location.pathname === "/"} readOnly />
-          <Link to="/" className="dropdown-item nav-item px-3 py-2 mb-2 bg-primary-subtle border border-2 border-primary rounded" htmlFor="home">
-            Home
-          </Link>
+        <div className="dropdown d-lg-none d-flex">
+          <button
+            className="mobile-menu-btn"
+            type="button"
+            data-bs-toggle="dropdown"
+            aria-expanded="false"
+          >
+            <i className="bi bi-list fs-5"></i>
+          </button>
+          <div className="dropdown-menu dropdown-menu-end mobile-menu-panel">
+            {navItems.map((item) => (
+              <Link
+                key={item.to}
+                to={item.to}
+                className={`mobile-menu-item ${location.pathname === item.to ? "active" : ""}`}
+              >
+                {item.label}
+              </Link>
+            ))}
 
-          <input type="radio" className="btn-check" name="btnradio" id="reportLost" autoComplete="off" checked={location.pathname === "/report-lost"} readOnly />
-          <Link to="/report-lost" className="nav-item dropdown-item px-3 py-2 mb-2 bg-primary-subtle border border-2 border-primary rounded" htmlFor="reportLost">
-            Report Lost
-          </Link>
+            <button
+              type="button"
+              className="mobile-menu-item theme-item"
+              onClick={() => setDarkMode((prev) => !prev)}
+            >
+              <span>{darkMode ? "Light mode" : "Dark mode"}</span>
+            </button>
 
-          <input type="radio" className="btn-check" name="btnradio" id="reportFound" autoComplete="off" checked={location.pathname === "/report-found"} readOnly />
-          <Link to="/report-found" className="nav-item dropdown-item px-3 py-2 mb-2 bg-primary-subtle border border-2 border-primary rounded" htmlFor="reportFound">
-            Report Found
-          </Link>
-
-          <input type="radio" className="btn-check" name="btnradio" id="browseItems" autoComplete="off" checked={location.pathname === "/browse-items"} readOnly />
-          <Link to="/browse-items" className="nav-item dropdown-item px-3 py-2 mb-2 bg-primary-subtle border border-2 border-primary rounded" htmlFor="browseItems">
-            Browse Items
-          </Link>
-
-          <Link to="/login" className="bg-primary-subtle nav-item dropdown-item px-3 py-2 border border-2 border-primary rounded">
-            Login <i className="bi bi-box-arrow-in-right"></i>
-          </Link>
+            {isLoggedIn ? (
+              <button type="button" onClick={handleLogout} className="mobile-menu-item danger-item">
+                Logout
+              </button>
+            ) : (
+              <Link to="/login" className="mobile-menu-item active">
+                Login
+              </Link>
+            )}
+          </div>
         </div>
       </div>
-    </div>
+    </header>
   )
 }
 

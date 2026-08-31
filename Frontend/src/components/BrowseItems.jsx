@@ -1,128 +1,151 @@
+import { useEffect, useMemo, useState } from "react"
+import { apiGet } from "../services/api"
+
+const toRelativeTime = (dateValue) => {
+    const date = new Date(dateValue)
+    const now = new Date()
+    const diffMs = now - date
+    const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24))
+
+    if (diffDays <= 0) {
+        return "Today"
+    }
+
+    if (diffDays === 1) {
+        return "1 day ago"
+    }
+
+    return `${diffDays} days ago`
+}
+
 function BrowseItems() {
+    const [lostItems, setLostItems] = useState([])
+    const [foundItems, setFoundItems] = useState([])
+    const [loading, setLoading] = useState(true)
+    const [error, setError] = useState("")
+
+    const [categoryFilter, setCategoryFilter] = useState("")
+    const [locationFilter, setLocationFilter] = useState("")
+    const [typeFilter, setTypeFilter] = useState("")
+    const [searchQuery, setSearchQuery] = useState("")
+
+    useEffect(() => {
+        const loadItems = async () => {
+            setLoading(true)
+            setError("")
+
+            try {
+                const [lostResponse, foundResponse] = await Promise.all([
+                    apiGet("/lost-items"),
+                    apiGet("/found-items"),
+                ])
+
+                setLostItems((lostResponse.data || []).map((item) => ({ ...item, itemType: "lost" })))
+                setFoundItems((foundResponse.data || []).map((item) => ({ ...item, itemType: "found" })))
+            } catch (loadError) {
+                setError(loadError.message || "Failed to load items")
+            } finally {
+                setLoading(false)
+            }
+        }
+
+        loadItems()
+    }, [])
+
+    const allItems = useMemo(() => [...lostItems, ...foundItems], [lostItems, foundItems])
+
+    const locationOptions = useMemo(() => {
+        const values = new Set(allItems.map((item) => item.location).filter(Boolean))
+        return Array.from(values)
+    }, [allItems])
+
+    const filteredItems = useMemo(() => {
+        return allItems.filter((item) => {
+            const categoryMatch = categoryFilter ? item.category === categoryFilter : true
+            const locationMatch = locationFilter ? item.location === locationFilter : true
+            const typeMatch = typeFilter ? item.itemType === typeFilter : true
+
+            const title = (item.title || "").toLowerCase()
+            const description = (item.description || "").toLowerCase()
+            const query = searchQuery.trim().toLowerCase()
+            const searchMatch = query ? title.includes(query) || description.includes(query) : true
+
+            return categoryMatch && locationMatch && typeMatch && searchMatch
+        })
+    }, [allItems, categoryFilter, locationFilter, typeFilter, searchQuery])
+
     return (
-        <div id="ReportLost" className="d-flex flex-column w-90 mx-4 mx-md-2 mb-2 px-4 py-2 rounded border border-primary">
-            <div className="d-flex flex-column w-100 px-3 py-2 rounded align-items-center justify-content-center gap-3">
-                <h2 className="h2 display-6 fw-bold text-center my-1 gap-1">Browse Lost & Found Items</h2>
-                <div className="filter-grid d-flex w-100 px-3 py-3 rounded gap-2 flex-no-wrap border border-2 border-primary bg-primary-subtle">
-                    <select className="filter-select form-select form-control px-4 py-2 border border-primary text-primary border-2 w-100">
+        <div id="BrowseItems" className="marketplace-page">
+            <div className="marketplace-shell">
+                <div className="marketplace-header">
+                    <div>
+                        <span className="section-kicker">Find the trail</span>
+                        <h2>Browse Lost & Found Items</h2>
+                    </div>
+                    <div className="marketplace-badges">
+                        <span>{allItems.length} active listings</span>
+                        <span>{lostItems.length} lost</span>
+                        <span>{foundItems.length} found</span>
+                    </div>
+                </div>
+
+                <div className="filter-grid">
+                    <select value={categoryFilter} onChange={(event) => setCategoryFilter(event.target.value)} className="modern-input select-input">
                         <option value="">All Categories</option>
                         <option value="electronics">Electronics</option>
                         <option value="clothing">Clothing</option>
                         <option value="accessories">Accessories</option>
                         <option value="books">Books</option>
                         <option value="keys">Keys</option>
+                        <option value="other">Other</option>
                     </select>
-                    <select className="filter-select form-select form-control px-4 py-2 border border-primary text-primary border-2 w-100">
+                    <select value={locationFilter} onChange={(event) => setLocationFilter(event.target.value)} className="modern-input select-input">
                         <option value="">All Locations</option>
-                        <option value="library">Library</option>
-                        <option value="cafeteria">Cafeteria</option>
-                        <option value="classroom">Classroom</option>
-                        <option value="gym">Gym</option>
+                        {locationOptions.map((location) => (
+                            <option key={location} value={location}>{location}</option>
+                        ))}
                     </select>
-                    <select className="filter-select form-select form-control px-4 py-2 border border-primary text-primary border-2 w-100">
+                    <select value={typeFilter} onChange={(event) => setTypeFilter(event.target.value)} className="modern-input select-input">
                         <option value="">Lost & Found</option>
                         <option value="lost">Lost Items</option>
                         <option value="found">Found Items</option>
                     </select>
-                    <input type="text" placeholder="Search items..." className="filter-input form-control px-4 py-2 border border-primary text-primary border-2 w-100" />
+                    <input value={searchQuery} onChange={(event) => setSearchQuery(event.target.value)} type="text" placeholder="Search items..." className="modern-input" />
                 </div>
 
+                <div className="items-list">
+                    {loading ? <p className="default-state">Loading items...</p> : null}
+                    {error ? <p className="message error">{error}</p> : null}
 
-                <div className="items-list d-flex w-100 gap-3 my-2 px-3 py-3 rounded bg-primary-subtle flex-wrap border border-2 border-primary">
-                    <div className="item-card-lost item-card bg-white d-flex flex-column gap-2 p-4 border border-2 rounded">
-                        <div className="item-header d-flex justify-content-between align-items-center my-2">
-                            <span className="item-status bg-danger-subtle text-danger rounded-pill px-3 fw-bold py-1">Lost</span>
-                            <span className="item-time">2 days ago</span>
-                        </div>
-                        <h3 className="item-name h3 fw-bold">iPhone 13 Pro</h3>
-                        <p className="item-description">Blue color, cracked screen protector, has a clear case with stickers</p>
-                        <div className="item-details d-flex flex-column gap-1 align-items-start">
-                            <p><strong>Last seen:</strong> Library 3rd Floor</p>
-                            <p><strong>Brand:</strong> Apple</p>
-                        </div>
-                        <button className="btn btn-primary px-4 py-2 mt-2 w-100">
-                            I Found This Item
-                        </button>
-                    </div>
-                    <div className="item-card-found item-card bg-white d-flex flex-column gap-2 p-4 border border-2 rounded">
-                        <div className="item-header d-flex justify-content-between align-items-center my-2">
-                            <span className="item-status bg-success-subtle text-success rounded-pill px-3 fw-bold py-1">Lost</span>
-                            <span className="item-time">2 days ago</span>
-                        </div>
-                        <h3 className="item-name h3 fw-bold">iPhone 13 Pro</h3>
-                        <p className="item-description">Blue color, cracked screen protector, has a clear case with stickers</p>
-                        <div className="item-details d-flex flex-column gap-1 align-items-start">
-                            <p><strong>Last seen:</strong> Library 3rd Floor</p>
-                            <p><strong>Brand:</strong> Apple</p>
-                        </div>
-                        <button className="btn btn-primary px-4 py-2 mt-2 w-100">
-                            I Found This Item
-                        </button>
-                    </div>
-                    <div className="item-card-lost item-card bg-white d-flex flex-column gap-2 p-4 border border-2 rounded">
-                        <div className="item-header d-flex justify-content-between align-items-center my-2">
-                            <span className="item-status bg-danger-subtle text-danger rounded-pill px-3 fw-bold py-1">Lost</span>
-                            <span className="item-time">2 days ago</span>
-                        </div>
-                        <h3 className="item-name h3 fw-bold">iPhone 13 Pro</h3>
-                        <p className="item-description">Blue color, cracked screen protector, has a clear case with stickers</p>
-                        <div className="item-details d-flex flex-column gap-1 align-items-start">
-                            <p><strong>Last seen:</strong> Library 3rd Floor</p>
-                            <p><strong>Brand:</strong> Apple</p>
-                        </div>
-                        <button className="btn btn-primary px-4 py-2 mt-2 w-100">
-                            I Found This Item
-                        </button>
-                    </div>
-                    <div className="item-card-lost item-card bg-white d-flex flex-column gap-2 p-4 border border-2 rounded">
-                        <div className="item-header d-flex justify-content-between align-items-center my-2">
-                            <span className="item-status bg-danger-subtle text-danger rounded-pill px-3 fw-bold py-1">Lost</span>
-                            <span className="item-time">2 days ago</span>
-                        </div>
-                        <h3 className="item-name h3 fw-bold">iPhone 13 Pro</h3>
-                        <p className="item-description">Blue color, cracked screen protector, has a clear case with stickers</p>
-                        <div className="item-details d-flex flex-column gap-1 align-items-start">
-                            <p><strong>Last seen:</strong> Library 3rd Floor</p>
-                            <p><strong>Brand:</strong> Apple</p>
-                        </div>
-                        <button className="btn btn-primary px-4 py-2 mt-2 w-100">
-                            I Found This Item
-                        </button>
-                    </div>
-                    <div className="item-card-found item-card bg-white d-flex flex-column gap-2 p-4 border border-2 rounded">
-                        <div className="item-header d-flex justify-content-between align-items-center my-2">
-                            <span className="item-status bg-success-subtle text-success rounded-pill px-3 fw-bold py-1">Lost</span>
-                            <span className="item-time">2 days ago</span>
-                        </div>
-                        <h3 className="item-name h3 fw-bold">iPhone 13 Pro</h3>
-                        <p className="item-description">Blue color, cracked screen protector, has a clear case with stickers</p>
-                        <div className="item-details d-flex flex-column gap-1 align-items-start">
-                            <p><strong>Last seen:</strong> Library 3rd Floor</p>
-                            <p><strong>Brand:</strong> Apple</p>
-                        </div>
-                        <button className="btn btn-primary px-4 py-2 mt-2 w-100">
-                            I Found This Item
-                        </button>
-                    </div>
-                    <div className="item-card-lost item-card bg-white d-flex flex-column gap-2 p-4 border border-2 rounded">
-                        <div className="item-header d-flex justify-content-between align-items-center my-2">
-                            <span className="item-status bg-danger-subtle text-danger rounded-pill px-3 fw-bold py-1">Lost</span>
-                            <span className="item-time">2 days ago</span>
-                        </div>
-                        <h3 className="item-name h3 fw-bold">iPhone 13 Pro</h3>
-                        <p className="item-description">Blue color, cracked screen protector, has a clear case with stickers</p>
-                        <div className="item-details d-flex flex-column gap-1 align-items-start">
-                            <p><strong>Last seen:</strong> Library 3rd Floor</p>
-                            <p><strong>Brand:</strong> Apple</p>
-                        </div>
-                        <button className="btn btn-primary px-4 py-2 mt-2 w-100">
-                            I Found This Item
-                        </button>
-                    </div>                    
+                    {!loading && !error && filteredItems.length === 0 ? (
+                        <p className="default-state">No items found for the selected filters.</p>
+                    ) : null}
+
+                    {!loading && !error && filteredItems.map((item) => {
+                        const isLost = item.itemType === "lost"
+
+                        return (
+                            <div key={`${item.itemType}-${item._id}`} className={`market-card ${isLost ? "lost" : "found"}`}>
+                                <div className="item-header">
+                                    <span className={`item-status ${isLost ? "lost" : "found"}`}>
+                                        {isLost ? "Lost" : "Found"}
+                                    </span>
+                                    <span className="item-time">{toRelativeTime(item.createdAt)}</span>
+                                </div>
+                                <h3>{item.title}</h3>
+                                <p className="item-description">{item.description}</p>
+                                <div className="item-meta">
+                                    <span><strong>{isLost ? "Last seen" : "Found at"}:</strong> {item.location}</span>
+                                    <span><strong>Category:</strong> {item.category}</span>
+                                    {item.color ? <span><strong>Color:</strong> {item.color}</span> : null}
+                                </div>
+                            </div>
+                        )
+                    })}
                 </div>
             </div>
         </div>
-    );
+    )
 }
 
 export default BrowseItems

@@ -1,55 +1,124 @@
+import { useState } from "react"
+import { apiPost } from "../services/api"
+import { getValidToken } from "../services/auth"
+
 function ReportLost() {
+    const [formData, setFormData] = useState({
+        title: "",
+        category: "",
+        color: "",
+        dateLost: "",
+        location: "",
+        description: "",
+    })
+    const [loading, setLoading] = useState(false)
+    const [message, setMessage] = useState("")
+    const [error, setError] = useState("")
+
+    const handleChange = (event) => {
+        const { name, value } = event.target
+        setFormData((previous) => ({ ...previous, [name]: value }))
+    }
+
+    const handleSubmit = async (event) => {
+        event.preventDefault()
+        setLoading(true)
+        setMessage("")
+        setError("")
+
+        const token = getValidToken()
+        if (!token) {
+            setError("Please login before reporting lost items")
+            setLoading(false)
+            return
+        }
+
+        try {
+            await apiPost("/lost-items", formData, token)
+            setMessage("Lost item reported successfully")
+            setFormData({
+                title: "",
+                category: "",
+                color: "",
+                dateLost: "",
+                location: "",
+                description: "",
+            })
+        } catch (submitError) {
+            setError(submitError.message || "Failed to report lost item")
+        } finally {
+            setLoading(false)
+        }
+    }
+
     return (
-        <div id="ReportLost" className="d-flex flex-column w-90 mx-4 mx-md-2 mb-2 px-4 py-2 rounded border border-primary">
-            <div className="d-flex flex-column w-100 px-3 py-2 rounded align-items-center justify-content-center gap-3">
-                <h2 className="h2 display-6 fw-bold text-center my-1 gap-1">Report Lost Item</h2>
-                <form className="d-flex flex-column w-75 w-lg-100 gap-3 my-2">
-                    <div className="d-flex w-100 gap-4">
-                        <div className="form-group d-flex flex-column gap-1 align-items-start w-50">
-                            <label htmlFor="LostItemName" className="form-label fw-semibold">Item Name</label>
-                            <input type="text" className="form-control rounded px-4 py-3 w-100 border border-primary text-primary border-2" id="LostItemName" placeholder="Enter item name" required />
+        <div id="ReportLost" className="studio-page">
+            <div className="studio-shell">
+                <aside className="studio-side">
+                    <span className="section-kicker">Lost item</span>
+                    <h2>Tell the story clearly so the right person finds it.</h2>
+                    <ul>
+                        <li>Describe unique markers and last-seen place</li>
+                        <li>Keep details specific and honest</li>
+                        <li>Increase the chance of a fast match</li>
+                    </ul>
+                </aside>
+
+                <div className="studio-card">
+                    <div className="card-header-row">
+                        <div>
+                            <span className="mini-label">File a report</span>
+                            <h3>Report Lost Item</h3>
                         </div>
-                        <div className="form-group d-flex flex-column gap-1 align-items-start w-50">
-                            <label className="form-label fw-semibold">Category</label>
-                            <select className="form-select rounded px-4 py-3 w-100 border border-primary text-primary border-2">
-                                <option value="">Select category</option>
-                                <option value="electronics">Electronics</option>
-                                <option value="clothing">Clothing</option>
-                                <option value="accessories">Accessories</option>
-                                <option value="books">Books</option>
-                                <option value="keys">Keys</option>
-                                <option value="other">Other</option>
-                            </select>
-                        </div>
+                        <span className="status-badge lost">Active</span>
                     </div>
-                    <div className="d-flex w-100 gap-4">
-                        <div className="form-group d-flex flex-column gap-1 align-items-start w-50">
-                            <label htmlFor="LostColor" className="form-label fw-semibold">Color</label>
-                            <input type="text" className="form-control rounded px-4 py-3 w-100 border border-primary text-primary border-2" id="LostColor" placeholder="e.g., Black, Blue, Red" required />
+
+                    <form className="studio-form" onSubmit={handleSubmit}>
+                        <div className="field-row two-up">
+                            <div className="field-group">
+                                <label htmlFor="LostItemName" className="field-label">Item Name</label>
+                                <input type="text" name="title" value={formData.title} onChange={handleChange} className="modern-input" id="LostItemName" placeholder="Enter item name" required />
+                            </div>
+                            <div className="field-group">
+                                <label className="field-label">Category</label>
+                                <select name="category" value={formData.category} onChange={handleChange} className="modern-input select-input" required>
+                                    <option value="">Select category</option>
+                                    <option value="electronics">Electronics</option>
+                                    <option value="clothing">Clothing</option>
+                                    <option value="accessories">Accessories</option>
+                                    <option value="books">Books</option>
+                                    <option value="keys">Keys</option>
+                                    <option value="other">Other</option>
+                                </select>
+                            </div>
                         </div>
-                        <div className="form-group d-flex flex-column gap-1 align-items-start w-50">
-                            <label htmlFor="DateLost" className="form-label fw-semibold">Date Lost</label>
-                            <input type="date" id="DateLost" required className="form-control rounded px-4 py-3 w-100 border border-primary text-primary border-2" />
+
+                        <div className="field-row two-up">
+                            <div className="field-group">
+                                <label htmlFor="LostColor" className="field-label">Color</label>
+                                <input type="text" name="color" value={formData.color} onChange={handleChange} className="modern-input" id="LostColor" placeholder="e.g., Black, Blue, Red" required />
+                            </div>
+                            <div className="field-group">
+                                <label htmlFor="DateLost" className="field-label">Date Lost</label>
+                                <input type="date" name="dateLost" value={formData.dateLost} onChange={handleChange} id="DateLost" className="modern-input" required />
+                            </div>
                         </div>
-                    </div>
-                    <div className="d-flex w-100 gap-4">
-                        <div className="form-group d-flex flex-column gap-1 align-items-start w-100">
-                            <label className="form-label fw-semibold">Last Seen Location</label>
-                            <input type="text" className="form-control rounded px-4 py-3 w-100 border border-primary text-primary border-2" placeholder="e.g., Library 2nd Floor, Cafeteria, Room 205" required />
+
+                        <div className="field-group">
+                            <label className="field-label">Last Seen Location</label>
+                            <input type="text" name="location" value={formData.location} onChange={handleChange} className="modern-input" placeholder="e.g., Library 2nd Floor, Cafeteria, Room 205" required />
                         </div>
-                    </div>
-                    <div className="d-flex w-100 gap-4">
-                        <div className="form-group d-flex flex-column gap-1 align-items-start w-100">
-                            <label className="form-label fw-semibold">Detailed Description</label>
-                            <textarea rows="4" className="form-control rounded px-4 py-3 w-100 border border-primary text-primary border-2" placeholder="Any specific identifiers, scratches, stickers, or unique features..."></textarea>
+
+                        <div className="field-group">
+                            <label className="field-label">Detailed Description</label>
+                            <textarea rows="4" name="description" value={formData.description} onChange={handleChange} className="modern-input" placeholder="Any specific identifiers, scratches, stickers, or unique features..." required></textarea>
                         </div>
-                    </div>
-                    <div className="d-flex flex-column w-100 gap-2">
-                        <label for="LostImg" className="form-label fw-semibold">Lost thing reference image</label>
-                        <input class="form-control form-control-lg px-4 py-3 w-100 border border-primary text-primary border-2" id="LostImg" type="file" accept="image/*" />
-                    </div>
-                    <button type="submit" className="btn btn-primary btn-lg px-5 py-2 align-self-center mt-4">Submit Report</button>
-                </form>
+
+                        {message ? <p className="message success">{message}</p> : null}
+                        {error ? <p className="message error">{error}</p> : null}
+                        <button type="submit" className="primary-btn auth-submit" disabled={loading}>{loading ? "Submitting..." : "Submit Report"}</button>
+                    </form>
+                </div>
             </div>
         </div>
     )
