@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from "react"
+import { useNavigate } from "react-router-dom"
 import { apiGet } from "../services/api"
 
 const toRelativeTime = (dateValue) => {
@@ -19,6 +20,7 @@ const toRelativeTime = (dateValue) => {
 }
 
 function BrowseItems() {
+    const navigate = useNavigate()
     const [lostItems, setLostItems] = useState([])
     const [foundItems, setFoundItems] = useState([])
     const [loading, setLoading] = useState(true)
@@ -138,6 +140,25 @@ function BrowseItems() {
                                     <span><strong>{isLost ? "Last seen" : "Found at"}:</strong> {item.location}</span>
                                     <span><strong>Category:</strong> {item.category}</span>
                                     {item.color ? <span><strong>Color:</strong> {item.color}</span> : null}
+                                    {!isLost && item.phone ? <span className="phone-display"><strong>📞 Contact:</strong> {item.phone}</span> : null}
+                                </div>
+
+                                <div className="item-actions">
+                                    {!isLost && item.phone ? (
+                                        <button type="button" className="secondary-btn small-btn contact-btn" onClick={() => window.alert(
+                                            `📞 Contact Information\n\nItem: ${item.title}\nFound by: ${item.createdBy?.name || 'the finder'}\n📱 Phone: ${item.phone}\n\n💡 Tip: Call or WhatsApp them!`
+                                        )}>
+                                            📞 Contact Owner
+                                        </button>
+                                    ) : null}
+                                    {!isLost && !item.phone ? (
+                                        <span className="no-contact-hint">Phone not provided</span>
+                                    ) : null}
+                                    {isLost ? (
+                                        <button type="button" className="secondary-btn small-btn found-btn" onClick={() => navigate(`/report-found?lostItem=${item._id}&title=${encodeURIComponent(item.title || '')}&category=${encodeURIComponent(item.category || '')}&color=${encodeURIComponent(item.color || '')}&location=${encodeURIComponent(item.location || '')}&description=${encodeURIComponent(item.description || '')}`)}>
+                                            ✅ I Found This!
+                                        </button>
+                                    ) : null}
                                 </div>
                             </div>
                         )

@@ -1,4 +1,5 @@
-import { useState } from "react"
+import { useState, useEffect } from "react"
+import { useSearchParams } from "react-router-dom"
 import { apiPost } from "../services/api"
 import { getValidToken } from "../services/auth"
 import { getFoundItemMatches } from "../services/carryfreeApi"
@@ -9,6 +10,7 @@ const emptyForm = {
     color: "",
     dateFound: "",
     location: "",
+    phone: "",
     description: "",
 }
 
@@ -24,6 +26,7 @@ const formatDate = (dateValue) => {
 }
 
 function ReportFound() {
+    const [searchParams] = useSearchParams()
     const [formData, setFormData] = useState(emptyForm)
     const [loading, setLoading] = useState(false)
     const [message, setMessage] = useState("")
@@ -31,6 +34,26 @@ function ReportFound() {
     const [matches, setMatches] = useState([])
     const [matchesLoading, setMatchesLoading] = useState(false)
     const [matchesError, setMatchesError] = useState("")
+    const isPreFilled = searchParams.has("lostItem")
+
+    useEffect(() => {
+        const title = searchParams.get("title")
+        const category = searchParams.get("category")
+        const color = searchParams.get("color")
+        const location = searchParams.get("location")
+        const description = searchParams.get("description")
+
+        if (title || category || color || location || description) {
+            setFormData((previous) => ({
+                ...previous,
+                ...(title ? { title } : {}),
+                ...(category ? { category } : {}),
+                ...(color ? { color } : {}),
+                ...(location ? { location } : {}),
+                ...(description ? { description } : {}),
+            }))
+        }
+    }, [searchParams])
 
     const handleChange = (event) => {
         const { name, value } = event.target
@@ -104,6 +127,12 @@ function ReportFound() {
                         <span className="status-badge found">Ready</span>
                     </div>
 
+                    {isPreFilled ? (
+                        <div className="message info prefilled-banner">
+                            ℹ️ This form has been pre-filled with the lost item details. Please confirm the information is correct and add YOUR phone number before submitting.
+                        </div>
+                    ) : null}
+
                     <form className="studio-form" onSubmit={handleSubmit}>
                         <div className="field-row two-up">
                             <div className="field-group">
@@ -138,6 +167,12 @@ function ReportFound() {
                         <div className="field-group">
                             <label className="field-label">Found Location</label>
                             <input type="text" name="location" value={formData.location} onChange={handleChange} className="modern-input" placeholder="Where did you find it?" required />
+                        </div>
+
+                        <div className="field-group">
+                            <label className="field-label">📱 Phone Number <span className="required-label">*</span></label>
+                            <input type="tel" name="phone" value={formData.phone} onChange={handleChange} className="modern-input" placeholder="Your phone number for the owner to contact you" required />
+                            <p className="field-hint">Required - the item owner needs a way to reach you.</p>
                         </div>
 
                         <div className="field-group">

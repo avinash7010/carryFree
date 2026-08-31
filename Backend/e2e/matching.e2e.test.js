@@ -125,6 +125,9 @@ const submitFound = async (driver, item) => {
   await fillField(driver, "color", item.color);
   await fillDateField(driver, "dateFound", item.dateFound);
   await fillField(driver, "location", item.location);
+  if (item.phone) {
+    await fillField(driver, "phone", item.phone);
+  }
   await fillField(driver, "description", item.description);
   await driver.findElement(By.css('button[type="submit"]')).click();
   await waitFor(driver, async () => (await visibleText(driver)).includes("Found item reported successfully"));
@@ -173,6 +176,7 @@ test("Strong Lost -> Found match appears in browser", async () => {
       color: "Black",
       location: "Library",
       dateFound: today,
+      phone: "+1 555-0101",
       description: "Black wireless earbuds with a small blue sticker on the case",
     });
 
@@ -205,6 +209,7 @@ test("Strong Lost -> Found match appears in browser", async () => {
       color: "Black",
       location: "Cafeteria",
       dateFound: today,
+      phone: "+1 555-0102",
       description: "Plain laptop with no sticker",
     });
 

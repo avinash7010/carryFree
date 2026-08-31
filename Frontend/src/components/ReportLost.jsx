@@ -9,6 +9,7 @@ const emptyForm = {
     color: "",
     dateLost: "",
     location: "",
+    phone: "",
     description: "",
 }
 
@@ -138,6 +139,12 @@ function ReportLost() {
                         <div className="field-group">
                             <label className="field-label">Last Seen Location</label>
                             <input type="text" name="location" value={formData.location} onChange={handleChange} className="modern-input" placeholder="e.g., Library 2nd Floor, Cafeteria, Room 205" required />
+                        </div>
+
+                        <div className="field-group">
+                            <label className="field-label">📱 Phone Number <span className="optional-label">(Optional)</span></label>
+                            <input type="tel" name="phone" value={formData.phone} onChange={handleChange} className="modern-input" placeholder="Optional - for contact if item is found" />
+                            <p className="field-hint">Optional - provide a number so the finder can reach you directly.</p>
                         </div>
 
                         <div className="field-group">
