@@ -2,6 +2,7 @@ import Claim from "../models/Claim.js";
 import FoundItem from "../models/FoundItem.js";
 import LostItem from "../models/LostItem.js";
 import { successResponse, errorResponse } from "../utils/apiResponse.js";
+import { notifyUsers } from "../services/notification.service.js";
 import mongoose from "mongoose";
 
 export const createClaim = async (req, res) => {
@@ -61,6 +62,20 @@ export const createClaim = async (req, res) => {
       message,
     });
 
+    // Notify finder (fire-and-forget, failure isolated)
+    notifyUsers([
+      {
+        userId: foundItem.createdBy,
+        type: "claim_received",
+        title: "New Claim Received",
+        message: `Someone submitted a claim for your found item: ${foundItem.title || "Found Item"}.`,
+        metadata: {
+          claimId: claim._id,
+          matchKey: `claim:${claim._id}:received`,
+        },
+      },
+    ]).catch(() => {});
+
     return successResponse(
       res,
       "Claim request sent successfully",
@@ -75,6 +90,26 @@ export const createClaim = async (req, res) => {
     return errorResponse(res, "Failed to create claim", 500, error.message);
   }
 };
+
+export const getMyClaims = async (req, res) => {
+  try {
+    const claims = await Claim.find({ claimant: req.user.id })
+      .populate("lostItem")
+      .populate("foundItem")
+      .populate("finder", "name email role rating totalReviews completedDeliveries")
+      .sort({ createdAt: -1 });
+
+    return successResponse(res, "My claims fetched", claims);
+  } catch (error) {
+    return errorResponse(
+      res,
+      "Failed to fetch my claims",
+      500,
+      error.message
+    );
+  }
+};
+
 
 export const getReceivedClaims = async (req, res) => {
   try {
@@ -107,7 +142,7 @@ export const updateClaimStatus = async (req, res) => {
       return errorResponse(res, "Invalid claim id", 400);
     }
 
-    const claim = await Claim.findById(req.params.id);
+    const claim = await Claim.findById(req.params.id).populate("foundItem").populate("lostItem");
 
     if (!claim) {
       return errorResponse(res, "Claim not found", 404);
@@ -120,6 +155,27 @@ export const updateClaimStatus = async (req, res) => {
     if (claim.status !== "pending") {
       return errorResponse(res, "Claim is already finalized", 400);
     }
+    // Notify claimant
+    const notificationType = status === "approved" ? "claim_approved" : "claim_rejected";
+    const notificationTitle = status === "approved" ? "Claim Approved" : "Claim Rejected";
+    const notificationMessage =
+      status === "approved"
+        ? `Your claim for "${claim.foundItem?.title || "found item"}" was approved! Please coordinate with the finder to recover your item.`
+        : `Your claim for "${claim.foundItem?.title || "found item"}" was rejected.`;
+
+    notifyUsers([
+      {
+        userId: claim.claimant,
+        type: notificationType,
+        title: notificationTitle,
+        message: notificationMessage,
+        metadata: {
+          claimId: claim._id,
+          matchKey: `claim:${claim._id}:${status}`,
+        },
+      },
+    ]).catch(() => {});
+
 
     claim.status = status;
     await claim.save();

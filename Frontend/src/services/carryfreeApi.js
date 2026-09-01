@@ -51,5 +51,8 @@ export const createClaim = (payload, token) =>
 export const getReceivedClaims = (token) =>
   apiGet("/claims/received", token);
 
+export const getMyClaims = (token) =>
+  apiGet("/claims/my", token);
+
 export const updateClaimStatus = (claimId, status, token) =>
   apiPatch(`/claims/${claimId}`, { status }, token);

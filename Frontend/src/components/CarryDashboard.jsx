@@ -3,6 +3,7 @@ import {
   addTrackingUpdate,
   createBooking,
   generateOtp,
+  getMyClaims,
   getMyNotifications,
   getMyBookings,
   getMyPackages,
@@ -36,6 +37,7 @@ function CarryDashboard() {
   const [trackingInputs, setTrackingInputs] = useState({});
   const [trackingHistory, setTrackingHistory] = useState({});
   const [claims, setClaims] = useState([]);
+  const [myClaims, setMyClaims] = useState([]);
 
   const loadDashboard = async (showSpinner = true) => {
     if (!token) {
@@ -72,6 +74,13 @@ function CarryDashboard() {
         setClaims(claimsResponse.data || []);
       } catch {
         // silently ignore — claims section will show empty state
+      }
+
+      try {
+        const myClaimsResponse = await getMyClaims(token);
+        setMyClaims(myClaimsResponse.data || []);
+      } catch {
+        // silently ignore — my claims section will show empty state
       }
     } catch (loadError) {
       setError(loadError.message || "Failed to load dashboard");
@@ -363,6 +372,57 @@ function CarryDashboard() {
                 {mySenderBookings.length === 0 ? <p className="default-state">No sender bookings yet.</p> : null}
               </div>
             </section>
+
+            <section className="dashboard-panel">
+              <div className="panel-title-row">
+                <h3>My Lost & Found Claims</h3>
+                <span className="dashboard-pill alt">{myClaims.length} total</span>
+              </div>
+              <div className="booking-list">
+                {myClaims.length === 0 ? <p className="default-state">You haven't submitted any lost & found claim requests yet.</p> : null}
+                {myClaims.map((claim) => {
+                  const lostItem = claim.lostItem || {};
+                  const foundItem = claim.foundItem || {};
+                  const finder = claim.finder || {};
+
+                  return (
+                    <div key={claim._id} className="booking-card claim-card">
+                      <div className="claim-card-header">
+                        <div>
+                          <p className="booking-route">{lostItem.title || "Lost item"} ↔ {foundItem.title || "Found item"}</p>
+                          <p className="booking-meta">
+                            Finder: {finder.name || "Unknown"} ({finder.email || "No email provided"})
+                          </p>
+                          <p className="booking-meta">My Message: {claim.message}</p>
+                          <p className="booking-meta">
+                            <span className={`status-badge ${claim.status === "pending" ? "neutral" : claim.status === "approved" ? "found" : "lost"}`}>
+                              {claim.status}
+                            </span>
+                            {' '}{new Date(claim.createdAt).toLocaleString()}
+                          </p>
+                          {claim.status === "approved" ? (
+                            <p className="booking-meta success-text">
+                              <strong>Approved:</strong> The finder confirmed this is a match! Please contact the finder at {finder.email || "their email"} to arrange item return/pickup.
+                            </p>
+                          ) : null}
+                          {claim.status === "rejected" ? (
+                            <p className="booking-meta error-text">
+                              <strong>Rejected:</strong> The finder determined this item does not match their found item.
+                            </p>
+                          ) : null}
+                          {claim.status === "pending" ? (
+                            <p className="booking-meta subtle">
+                              <strong>Pending:</strong> Awaiting review by the finder.
+                            </p>
+                          ) : null}
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            </section>
+
 
             <section className="dashboard-panel">
               <div className="panel-title-row">
