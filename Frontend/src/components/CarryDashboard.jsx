@@ -324,7 +324,7 @@ function CarryDashboard() {
                   <option value="">Select package</option>
                   {packages.map((pkg) => (
                     <option key={pkg._id} value={pkg._id}>
-                      {pkg.pickupLocation} to {pkg.dropLocation} ({pkg.status})
+                      {pkg.pickupLocation?.city} to {pkg.dropLocation?.city} ({pkg.status})
                     </option>
                   ))}
                 </select>
@@ -337,7 +337,7 @@ function CarryDashboard() {
                 {matchResults.map((match) => (
                   <div key={match.trip._id} className="match-card">
                     <div>
-                      <p className="match-route">{match.trip.source} to {match.trip.destination}</p>
+                      <p className="match-route">{match.trip.source?.city} to {match.trip.destination?.city}</p>
                       <p className="match-meta">
                         Score: {match.score} | Date: {new Date(match.trip.date).toLocaleDateString()} | Capacity: {match.trip.availableCapacityKg}kg
                       </p>
@@ -360,7 +360,7 @@ function CarryDashboard() {
               <div className="booking-list">
                 {mySenderBookings.map((booking) => (
                   <div key={booking._id} className="booking-card">
-                    <p className="booking-route">{booking.packageId?.pickupLocation} to {booking.packageId?.dropLocation}</p>
+                    <p className="booking-route">{booking.packageId?.pickupLocation?.city} to {booking.packageId?.dropLocation?.city}</p>
                     <p className="booking-meta">Status: {booking.status} | Payment: {booking.paymentStatus}</p>
                     {booking.status === "in-transit" ? (
                       <button type="button" className="secondary-btn small-btn" onClick={() => runBookingAction((id, _otp, authToken) => generateOtp(id, authToken), booking._id, "OTP generated.")} disabled={actionLoading}>
@@ -474,7 +474,7 @@ function CarryDashboard() {
               <div className="booking-list">
                 {myTravelerBookings.map((booking) => (
                   <div key={booking._id} className="booking-card">
-                    <p className="booking-route">{booking.tripId?.source} to {booking.tripId?.destination}</p>
+                    <p className="booking-route">{booking.tripId?.source?.city} to {booking.tripId?.destination?.city}</p>
                     <p className="booking-meta">Status: {booking.status} | Payment: {booking.paymentStatus}</p>
 
                     <div className="action-row compact">

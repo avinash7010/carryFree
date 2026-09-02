@@ -3,8 +3,12 @@ import { createTrip } from "../services/carryfreeApi";
 import { getValidToken } from "../services/auth";
 
 const initialState = {
-  source: "",
-  destination: "",
+  sourceCity: "",
+  sourceLat: "",
+  sourceLng: "",
+  destCity: "",
+  destLat: "",
+  destLng: "",
   date: "",
   capacityKg: "",
   notes: "",
@@ -37,8 +41,19 @@ function PostTrip() {
     try {
       await createTrip(
         {
-          ...formData,
+          source: {
+            city: formData.sourceCity,
+            lat: Number(formData.sourceLat),
+            lng: Number(formData.sourceLng),
+          },
+          destination: {
+            city: formData.destCity,
+            lat: Number(formData.destLat),
+            lng: Number(formData.destLng),
+          },
+          date: formData.date,
           capacityKg: Number(formData.capacityKg),
+          notes: formData.notes,
         },
         token
       );
@@ -74,14 +89,33 @@ function PostTrip() {
           </div>
 
           <form className="studio-form" onSubmit={handleSubmit}>
-            <div className="field-row two-up">
+            <div className="field-row three-up">
               <div className="field-group">
-                <label className="field-label">Source</label>
-                <input type="text" name="source" value={formData.source} onChange={handleChange} className="modern-input" required />
+                <label className="field-label">Source City</label>
+                <input type="text" name="sourceCity" value={formData.sourceCity} onChange={handleChange} className="modern-input" placeholder="e.g. Mumbai" required />
               </div>
               <div className="field-group">
-                <label className="field-label">Destination</label>
-                <input type="text" name="destination" value={formData.destination} onChange={handleChange} className="modern-input" required />
+                <label className="field-label">Source Latitude</label>
+                <input type="number" step="any" name="sourceLat" value={formData.sourceLat} onChange={handleChange} className="modern-input" placeholder="e.g. 19.076" required />
+              </div>
+              <div className="field-group">
+                <label className="field-label">Source Longitude</label>
+                <input type="number" step="any" name="sourceLng" value={formData.sourceLng} onChange={handleChange} className="modern-input" placeholder="e.g. 72.877" required />
+              </div>
+            </div>
+
+            <div className="field-row three-up">
+              <div className="field-group">
+                <label className="field-label">Destination City</label>
+                <input type="text" name="destCity" value={formData.destCity} onChange={handleChange} className="modern-input" placeholder="e.g. Delhi" required />
+              </div>
+              <div className="field-group">
+                <label className="field-label">Destination Latitude</label>
+                <input type="number" step="any" name="destLat" value={formData.destLat} onChange={handleChange} className="modern-input" placeholder="e.g. 28.613" required />
+              </div>
+              <div className="field-group">
+                <label className="field-label">Destination Longitude</label>
+                <input type="number" step="any" name="destLng" value={formData.destLng} onChange={handleChange} className="modern-input" placeholder="e.g. 77.209" required />
               </div>
             </div>
 

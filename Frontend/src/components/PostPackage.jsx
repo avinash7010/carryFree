@@ -3,8 +3,12 @@ import { createPackage } from "../services/carryfreeApi";
 import { getValidToken } from "../services/auth";
 
 const initialState = {
-  pickupLocation: "",
-  dropLocation: "",
+  pickupCity: "",
+  pickupLat: "",
+  pickupLng: "",
+  dropCity: "",
+  dropLat: "",
+  dropLng: "",
   expectedDate: "",
   weight: "",
   receiverName: "",
@@ -40,8 +44,21 @@ function PostPackage() {
     try {
       await createPackage(
         {
-          ...formData,
+          pickupLocation: {
+            city: formData.pickupCity,
+            lat: Number(formData.pickupLat),
+            lng: Number(formData.pickupLng),
+          },
+          dropLocation: {
+            city: formData.dropCity,
+            lat: Number(formData.dropLat),
+            lng: Number(formData.dropLng),
+          },
+          expectedDate: formData.expectedDate,
           weight: Number(formData.weight),
+          receiverName: formData.receiverName,
+          receiverPhone: formData.receiverPhone,
+          description: formData.description,
           paymentAmount: Number(formData.paymentAmount || 0),
         },
         token
@@ -79,14 +96,33 @@ function PostPackage() {
           </div>
 
           <form className="studio-form" onSubmit={handleSubmit}>
-            <div className="field-row two-up">
+            <div className="field-row three-up">
               <div className="field-group">
-                <label className="field-label">Pickup Location</label>
-                <input type="text" name="pickupLocation" value={formData.pickupLocation} onChange={handleChange} className="modern-input" required />
+                <label className="field-label">Pickup City</label>
+                <input type="text" name="pickupCity" value={formData.pickupCity} onChange={handleChange} className="modern-input" placeholder="e.g. Mumbai" required />
               </div>
               <div className="field-group">
-                <label className="field-label">Drop Location</label>
-                <input type="text" name="dropLocation" value={formData.dropLocation} onChange={handleChange} className="modern-input" required />
+                <label className="field-label">Pickup Latitude</label>
+                <input type="number" step="any" name="pickupLat" value={formData.pickupLat} onChange={handleChange} className="modern-input" placeholder="e.g. 19.076" required />
+              </div>
+              <div className="field-group">
+                <label className="field-label">Pickup Longitude</label>
+                <input type="number" step="any" name="pickupLng" value={formData.pickupLng} onChange={handleChange} className="modern-input" placeholder="e.g. 72.877" required />
+              </div>
+            </div>
+
+            <div className="field-row three-up">
+              <div className="field-group">
+                <label className="field-label">Drop City</label>
+                <input type="text" name="dropCity" value={formData.dropCity} onChange={handleChange} className="modern-input" placeholder="e.g. Delhi" required />
+              </div>
+              <div className="field-group">
+                <label className="field-label">Drop Latitude</label>
+                <input type="number" step="any" name="dropLat" value={formData.dropLat} onChange={handleChange} className="modern-input" placeholder="e.g. 28.613" required />
+              </div>
+              <div className="field-group">
+                <label className="field-label">Drop Longitude</label>
+                <input type="number" step="any" name="dropLng" value={formData.dropLng} onChange={handleChange} className="modern-input" placeholder="e.g. 77.209" required />
               </div>
             </div>
 
