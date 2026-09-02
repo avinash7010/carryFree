@@ -1,6 +1,7 @@
 import FoundItem from "../models/FoundItem.js";
 import { successResponse, errorResponse } from "../utils/apiResponse.js";
 import { notifyMatchesForFoundItem } from "../services/lostFoundMatchNotification.service.js";
+import { uploadImage } from "../config/cloudinary.js";
 
 export const createFoundItem = async (req, res) => {
   try {
@@ -14,8 +15,15 @@ export const createFoundItem = async (req, res) => {
       );
     }
 
+    let imageUrl = req.body.image || undefined;
+
+    if (req.file) {
+      imageUrl = await uploadImage(req.file.buffer, "carryfree/found-items");
+    }
+
     const foundItem = await FoundItem.create({
       ...req.body,
+      image: imageUrl,
       createdBy: req.user.id,
     });
 
@@ -38,7 +46,7 @@ export const createFoundItem = async (req, res) => {
 
 export const getAllFoundItems = async (req, res) => {
   try {
-    const items = await FoundItem.find()
+    const items = await FoundItem.find({ status: "found" })
       .populate("createdBy", "name email role rating totalReviews completedDeliveries")
       .sort({ createdAt: -1 });
 

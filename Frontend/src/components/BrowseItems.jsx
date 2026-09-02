@@ -128,6 +128,9 @@ function BrowseItems() {
 
                         return (
                             <div key={`${item.itemType}-${item._id}`} className={`market-card ${isLost ? "lost" : "found"}`}>
+                                {item.image ? (
+                                    <img className="market-card-image" src={item.image} alt={item.title || "Item"} />
+                                ) : null}
                                 <div className="item-header">
                                     <span className={`item-status ${isLost ? "lost" : "found"}`}>
                                         {isLost ? "Lost" : "Found"}

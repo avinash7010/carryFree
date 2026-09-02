@@ -87,6 +87,30 @@ app.use((err, req, res, next) => {
     });
   }
 
+  // Multer file-size limit exceeded
+  if (err.code === "LIMIT_FILE_SIZE") {
+    return res.status(400).json({
+      success: false,
+      message: "File too large. Maximum size is 5 MB.",
+    });
+  }
+
+  // Multer file-filter rejection (invalid MIME type)
+  if (err.message && err.message.startsWith("Invalid file type")) {
+    return res.status(400).json({
+      success: false,
+      message: err.message,
+    });
+  }
+
+  // Other Multer errors (unexpected field, etc.)
+  if (err.name === "MulterError") {
+    return res.status(400).json({
+      success: false,
+      message: err.message,
+    });
+  }
+
   if (err) {
     return res.status(err.status || 500).json({
       success: false,

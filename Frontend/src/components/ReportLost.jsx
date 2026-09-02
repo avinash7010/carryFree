@@ -1,5 +1,5 @@
 import { useState } from "react"
-import { apiPost } from "../services/api"
+import { apiPostMultipart } from "../services/api"
 import { getValidToken } from "../services/auth"
 import { createClaim, getLostItemMatches } from "../services/carryfreeApi"
 
@@ -38,10 +38,16 @@ function ReportLost() {
     const [claimMessage, setClaimMessage] = useState("")
     const [claimLoading, setClaimLoading] = useState(false)
     const [claimError, setClaimError] = useState("")
+    const [imageFile, setImageFile] = useState(null)
 
     const handleChange = (event) => {
         const { name, value } = event.target
         setFormData((previous) => ({ ...previous, [name]: value }))
+    }
+
+    const handleFileChange = (event) => {
+        const file = event.target.files?.[0] || null
+        setImageFile(file)
     }
 
     const handleSubmit = async (event) => {
@@ -60,7 +66,17 @@ function ReportLost() {
         }
 
         try {
-            const response = await apiPost("/lost-items", formData, token)
+            const submitData = new FormData()
+            submitData.append("title", formData.title)
+            submitData.append("description", formData.description)
+            submitData.append("category", formData.category)
+            submitData.append("location", formData.location)
+            submitData.append("dateLost", formData.dateLost)
+            if (formData.color) submitData.append("color", formData.color)
+            if (formData.phone) submitData.append("phone", formData.phone)
+            if (imageFile) submitData.append("image", imageFile)
+
+            const response = await apiPostMultipart("/lost-items", submitData, token)
             const createdLostItem = response.data
             const lostItemId = createdLostItem?._id || createdLostItem?.id
             setCreatedLostItemId(lostItemId)
@@ -182,6 +198,13 @@ function ReportLost() {
                         <div className="field-group">
                             <label className="field-label">Detailed Description</label>
                             <textarea rows="4" name="description" value={formData.description} onChange={handleChange} className="modern-input" placeholder="Any specific identifiers, scratches, stickers, or unique features..." required></textarea>
+                        </div>
+
+                        <div className="field-group">
+                            <label className="field-label">Photo <span className="optional-label">(Optional)</span></label>
+                            <input type="file" accept="image/jpeg,image/png,image/gif,image/webp" onChange={handleFileChange} className="modern-input" />
+                            <p className="field-hint">Upload a photo to help identify the item. Max 5 MB. JPEG, PNG, GIF, or WebP.</p>
+                            {imageFile ? <p className="field-hint">Selected: {imageFile.name}</p> : null}
                         </div>
 
                         {message ? <p className="message success">{message}</p> : null}

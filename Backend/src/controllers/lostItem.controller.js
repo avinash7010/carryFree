@@ -1,6 +1,7 @@
 import LostItem from "../models/LostItem.js";
 import { successResponse, errorResponse } from "../utils/apiResponse.js";
 import { notifyMatchesForLostItem } from "../services/lostFoundMatchNotification.service.js";
+import { uploadImage } from "../config/cloudinary.js";
 
 export const createLostItem = async (req, res) => {
   try {
@@ -14,8 +15,15 @@ export const createLostItem = async (req, res) => {
       );
     }
 
+    let imageUrl = req.body.image || undefined;
+
+    if (req.file) {
+      imageUrl = await uploadImage(req.file.buffer, "carryfree/lost-items");
+    }
+
     const lostItem = await LostItem.create({
       ...req.body,
+      image: imageUrl,
       createdBy: req.user.id,
     });
 
@@ -38,7 +46,7 @@ export const createLostItem = async (req, res) => {
 
 export const getAllLostItems = async (req, res) => {
   try {
-    const items = await LostItem.find()
+    const items = await LostItem.find({ status: "lost" })
       .populate("createdBy", "name email role rating totalReviews completedDeliveries")
       .sort({ createdAt: -1 });
 

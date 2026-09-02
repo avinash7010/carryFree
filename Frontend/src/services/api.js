@@ -58,3 +58,15 @@ export const apiPatch = (path, body, token) =>
     headers: buildHeaders(token, true),
     body: JSON.stringify(body),
   });
+
+export const apiPostMultipart = (path, formData, token) => {
+  const headers = {};
+  if (token) {
+    headers.Authorization = `Bearer ${token}`;
+  }
+  return apiRequest(path, {
+    method: "POST",
+    headers,
+    body: formData,
+  });
+};

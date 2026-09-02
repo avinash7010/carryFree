@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react"
 import { useSearchParams } from "react-router-dom"
-import { apiPost } from "../services/api"
+import { apiPostMultipart } from "../services/api"
 import { getValidToken } from "../services/auth"
 import { getFoundItemMatches } from "../services/carryfreeApi"
 
@@ -34,6 +34,7 @@ function ReportFound() {
     const [matches, setMatches] = useState([])
     const [matchesLoading, setMatchesLoading] = useState(false)
     const [matchesError, setMatchesError] = useState("")
+    const [imageFile, setImageFile] = useState(null)
     const isPreFilled = searchParams.has("lostItem")
 
     useEffect(() => {
@@ -60,6 +61,11 @@ function ReportFound() {
         setFormData((previous) => ({ ...previous, [name]: value }))
     }
 
+    const handleFileChange = (event) => {
+        const file = event.target.files?.[0] || null
+        setImageFile(file)
+    }
+
     const handleSubmit = async (event) => {
         event.preventDefault()
         setLoading(true)
@@ -76,7 +82,17 @@ function ReportFound() {
         }
 
         try {
-            const response = await apiPost("/found-items", formData, token)
+            const submitData = new FormData()
+            submitData.append("title", formData.title)
+            submitData.append("description", formData.description)
+            submitData.append("category", formData.category)
+            submitData.append("location", formData.location)
+            submitData.append("dateFound", formData.dateFound)
+            if (formData.color) submitData.append("color", formData.color)
+            if (formData.phone) submitData.append("phone", formData.phone)
+            if (imageFile) submitData.append("image", imageFile)
+
+            const response = await apiPostMultipart("/found-items", submitData, token)
             const createdFoundItem = response.data
             const foundItemId = createdFoundItem?._id || createdFoundItem?.id
 
@@ -178,6 +194,13 @@ function ReportFound() {
                         <div className="field-group">
                             <label className="field-label">Detailed Description</label>
                             <textarea rows="4" name="description" value={formData.description} onChange={handleChange} className="modern-input" placeholder="Describe in detail - scratches, stickers, or unique features..." required></textarea>
+                        </div>
+
+                        <div className="field-group">
+                            <label className="field-label">Photo <span className="optional-label">(Optional)</span></label>
+                            <input type="file" accept="image/jpeg,image/png,image/gif,image/webp" onChange={handleFileChange} className="modern-input" />
+                            <p className="field-hint">Upload a photo to help identify the item. Max 5 MB. JPEG, PNG, GIF, or WebP.</p>
+                            {imageFile ? <p className="field-hint">Selected: {imageFile.name}</p> : null}
                         </div>
 
                         {message ? <p className="message success">{message}</p> : null}

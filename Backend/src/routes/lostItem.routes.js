@@ -5,6 +5,7 @@ import {
   getMyLostItems,
 } from "../controllers/lostItem.controller.js";
 import authMiddleware from "../middleware/auth.middleware.js";
+import upload from "../middleware/upload.middleware.js";
 
 const router = express.Router();
 
@@ -12,7 +13,7 @@ const router = express.Router();
 router.get("/", getAllLostItems);
 
 // Private
-router.post("/", authMiddleware, createLostItem);
+router.post("/", authMiddleware, upload.single("image"), createLostItem);
 router.get("/my", authMiddleware, getMyLostItems);
 
 export default router;
