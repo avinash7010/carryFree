@@ -17,6 +17,7 @@ import bookingRoutes from "./routes/booking.routes.js";
 import notificationRoutes from "./routes/notification.routes.js";
 import trackingRoutes from "./routes/tracking.routes.js";
 import reviewRoutes from "./routes/review.routes.js";
+import userRoutes from "./routes/user.routes.js";
 
 dotenv.config();
 connectDB();
@@ -76,6 +77,7 @@ app.use("/api/bookings", bookingRoutes);
 app.use("/api/notifications", notificationRoutes);
 app.use("/api/tracking", trackingRoutes);
 app.use("/api/reviews", reviewRoutes);
+app.use("/api/users", userRoutes);
 
 // Centralized error middleware for consistent API error shape
 app.use((err, req, res, next) => {

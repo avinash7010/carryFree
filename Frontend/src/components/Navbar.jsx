@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react"
 import { Link, useLocation, useNavigate } from "react-router-dom"
-import { clearToken, getToken, getValidToken } from "../services/auth"
+import { clearToken, getToken, getValidToken, getCurrentUser } from "../services/auth"
 
 const navItems = [
   { to: "/", label: "Home" },
@@ -20,6 +20,7 @@ function Navbar() {
     const savedTheme = localStorage.getItem("carryfree-theme")
     return savedTheme ? savedTheme === "dark" : false
   })
+  const [currentUser, setCurrentUser] = useState(getCurrentUser())
 
   useEffect(() => {
     const checkAndSyncAuth = () => {
@@ -94,9 +95,16 @@ function Navbar() {
           </button>
 
           {isLoggedIn ? (
-            <button type="button" onClick={handleLogout} className="logout-btn">
-              Logout
-            </button>
+            <>
+              {currentUser && (
+                <Link to={`/profile/${currentUser.id}`} className="profile-btn">
+                  Profile
+                </Link>
+              )}
+              <button type="button" onClick={handleLogout} className="logout-btn">
+                Logout
+              </button>
+            </>
           ) : (
             <Link to="/login" className="login-btn">
               Login
@@ -133,9 +141,16 @@ function Navbar() {
             </button>
 
             {isLoggedIn ? (
-              <button type="button" onClick={handleLogout} className="mobile-menu-item danger-item">
-                Logout
-              </button>
+              <>
+                {currentUser && (
+                  <Link to={`/profile/${currentUser.id}`} className="mobile-menu-item">
+                    Profile
+                  </Link>
+                )}
+                <button type="button" onClick={handleLogout} className="mobile-menu-item danger-item">
+                  Logout
+                </button>
+              </>
             ) : (
               <Link to="/login" className="mobile-menu-item active">
                 Login
