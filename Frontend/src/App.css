@@ -651,6 +651,84 @@ textarea.modern-input {
   color: var(--danger);
 }
 
+.review-card {
+  margin-top: 12px;
+  padding: 14px 16px;
+  border-radius: 14px;
+  background: rgba(245, 247, 251, 0.9);
+  border: 1px solid rgba(28, 36, 52, 0.06);
+}
+
+.review-prompt {
+  margin: 0 0 10px;
+  font-size: 0.92rem;
+  font-weight: 700;
+  color: var(--graphite);
+}
+
+.review-form {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.star-row {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.star-btn {
+  background: none;
+  border: none;
+  font-size: 1.5rem;
+  cursor: pointer;
+  color: rgba(28, 36, 52, 0.18);
+  padding: 0;
+  line-height: 1;
+  transition: color 0.15s ease;
+}
+
+.star-btn.filled {
+  color: var(--signal-blue);
+}
+
+.rating-label {
+  margin-left: 8px;
+  font-size: 0.82rem;
+  font-weight: 700;
+  color: var(--ink-soft);
+}
+
+.review-textarea {
+  width: 100%;
+  padding: 10px 12px;
+  border-radius: 12px;
+  border: 1px solid rgba(28, 36, 52, 0.1);
+  font-family: inherit;
+  font-size: 0.9rem;
+  resize: vertical;
+  background: rgba(255, 255, 255, 0.7);
+}
+
+.review-textarea:focus {
+  outline: none;
+  border-color: var(--signal-blue);
+}
+
+.review-error {
+  margin: 0;
+  font-size: 0.85rem;
+  color: var(--danger);
+}
+
+.review-success {
+  margin: 0;
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: var(--success);
+}
+
 .match-card {
   align-items: center;
 }

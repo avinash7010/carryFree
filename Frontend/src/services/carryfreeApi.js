@@ -57,3 +57,7 @@ export const getMyClaims = (token) =>
 
 export const updateClaimStatus = (claimId, status, token) =>
   apiPatch(`/claims/${claimId}`, { status }, token);
+
+export const submitReview = (payload, token) => apiPost("/reviews", payload, token);
+export const getTravelerReviews = (travelerId) => apiGet(`/reviews/traveler/${travelerId}`);
+export const getTravelerStats = (travelerId) => apiGet(`/reviews/stats/${travelerId}`);

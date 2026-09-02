@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { useSearchParams } from "react-router-dom";
+import ReviewForm from "./ReviewForm";
 import {
   addTrackingUpdate,
   createBooking,
@@ -11,6 +12,7 @@ import {
   getPackageMatches,
   getReceivedClaims,
   getTrackingHistory,
+  getTravelerReviews,
   markAllNotificationsRead,
   markNotificationRead,
   respondToBooking,
@@ -44,6 +46,8 @@ function CarryDashboard() {
   const [trackingHistory, setTrackingHistory] = useState({});
   const [claims, setClaims] = useState([]);
   const [myClaims, setMyClaims] = useState([]);
+  const [reviewedBookings, setReviewedBookings] = useState(new Set());
+  const [activeReviewBookingId, setActiveReviewBookingId] = useState(null);
 
   const loadDashboard = async (showSpinner = true) => {
     if (!token) {
@@ -88,6 +92,42 @@ function CarryDashboard() {
       } catch {
         // silently ignore — my claims section will show empty state
       }
+
+      // Detect already-reviewed delivered sender bookings
+      const deliveredSenderBookings = (bookingResponse.data || []).filter(
+        (b) =>
+          b.status === "delivered" &&
+          String(b.senderId?._id || b.senderId) === String(currentUser?.id)
+      );
+      const uniqueTravelerIds = [
+        ...new Set(
+          deliveredSenderBookings
+            .map((b) => b.tripId?.travelerId?._id || b.tripId?.travelerId)
+            .filter(Boolean)
+            .map(String)
+        ),
+      ];
+      const reviewed = new Set();
+      await Promise.all(
+        uniqueTravelerIds.map(async (travelerId) => {
+          try {
+            const revRes = await getTravelerReviews(travelerId);
+            const reviews = revRes.data?.reviews || [];
+            for (const rev of reviews) {
+              if (
+                String(rev.reviewer?._id || rev.reviewer) ===
+                String(currentUser?.id)
+              ) {
+                const bookingRef = rev.bookingId?._id || rev.bookingId;
+                if (bookingRef) reviewed.add(String(bookingRef));
+              }
+            }
+          } catch {
+            // silently ignore — review check is best-effort
+          }
+        })
+      );
+      setReviewedBookings(reviewed);
     } catch (loadError) {
       setError(loadError.message || "Failed to load dashboard");
     } finally {
@@ -414,18 +454,77 @@ function CarryDashboard() {
             <section className="dashboard-panel">
               <h3>My Sender Bookings</h3>
               <div className="booking-list">
-                {mySenderBookings.map((booking) => (
-                  <div key={booking._id} className="booking-card">
-                    <p className="booking-route">{booking.packageId?.pickupLocation?.city} to {booking.packageId?.dropLocation?.city}</p>
-                    <p className="booking-meta">Status: {booking.status} | Payment: {booking.paymentStatus}</p>
-                    {booking.status === "in-transit" ? (
-                      <button type="button" className="secondary-btn small-btn" onClick={() => runBookingAction((id, _otp, authToken) => generateOtp(id, authToken), booking._id, "OTP generated.")} disabled={actionLoading}>
-                        Generate OTP
-                      </button>
-                    ) : null}
-                  </div>
-                ))}
-                {mySenderBookings.length === 0 ? <p className="default-state">No sender bookings yet.</p> : null}
+                {mySenderBookings.map((booking) => {
+                  const isDelivered = booking.status === "delivered";
+                  const bookingId = String(booking._id);
+                  const isReviewed = reviewedBookings.has(bookingId);
+                  const isReviewing = activeReviewBookingId === bookingId;
+                  const traveler =
+                    booking.tripId?.travelerId || {};
+
+                  return (
+                    <div key={booking._id} className="booking-card">
+                      <p className="booking-route">
+                        {booking.packageId?.pickupLocation?.city} to{" "}
+                        {booking.packageId?.dropLocation?.city}
+                      </p>
+                      <p className="booking-meta">
+                        Status: {booking.status} | Payment:{" "}
+                        {booking.paymentStatus}
+                      </p>
+
+                      {isDelivered && !isReviewed && !isReviewing && (
+                        <button
+                          type="button"
+                          className="secondary-btn small-btn"
+                          onClick={() => setActiveReviewBookingId(bookingId)}
+                          disabled={actionLoading}
+                        >
+                          Leave Review
+                        </button>
+                      )}
+
+                      {isDelivered && isReviewed && (
+                        <span className="status-badge found">Reviewed ✓</span>
+                      )}
+
+                      {isReviewing && (
+                        <ReviewForm
+                          bookingId={bookingId}
+                          travelerName={traveler.name || "Traveler"}
+                          onSubmitted={() => {
+                            setReviewedBookings((prev) =>
+                              new Set(prev).add(bookingId)
+                            );
+                            setActiveReviewBookingId(null);
+                            setMessage("Review submitted successfully.");
+                          }}
+                        />
+                      )}
+
+                      {booking.status === "in-transit" ? (
+                        <button
+                          type="button"
+                          className="secondary-btn small-btn"
+                          onClick={() =>
+                            runBookingAction(
+                              (id, _otp, authToken) =>
+                                generateOtp(id, authToken),
+                              booking._id,
+                              "OTP generated."
+                            )
+                          }
+                          disabled={actionLoading}
+                        >
+                          Generate OTP
+                        </button>
+                      ) : null}
+                    </div>
+                  );
+                })}
+                {mySenderBookings.length === 0 ? (
+                  <p className="default-state">No sender bookings yet.</p>
+                ) : null}
               </div>
             </section>
 

@@ -318,6 +318,7 @@ body[data-theme="dark"] .studio-side,
 body[data-theme="dark"] .notification-item,
 body[data-theme="dark"] .match-card,
 body[data-theme="dark"] .booking-card,
+body[data-theme="dark"] .review-card,
 body[data-theme="dark"] .filter-grid,
 body[data-theme="dark"] .modern-input,
 body[data-theme="dark"] .mobile-menu-panel {
@@ -1326,6 +1327,18 @@ body[data-theme="dark"] .modern-input::placeholder,
 body[data-theme="dark"] input::placeholder,
 body[data-theme="dark"] textarea::placeholder {
   color: rgba(195, 209, 234, 0.6) !important;
+}
+
+body[data-theme="dark"] .star-btn {
+  color: rgba(122, 162, 255, 0.25) !important;
+}
+
+body[data-theme="dark"] .star-btn.filled {
+  color: rgba(122, 162, 255, 0.9) !important;
+}
+
+body[data-theme="dark"] .rating-label {
+  color: rgba(195, 209, 234, 0.7) !important;
 }
 
 /* Form labels and hints */
