@@ -93,7 +93,7 @@ export const createBooking = async (req, res) => {
       throw updateError;
     }
 
-    await notifyUsers([
+    notifyUsers([
       {
         userId: booking.travelerId,
         type: "booking_requested",
@@ -108,7 +108,7 @@ export const createBooking = async (req, res) => {
         message: "Your payment is locked until delivery verification is complete.",
         metadata: { bookingId: booking._id, amount: lockedAmount },
       },
-    ]);
+    ]).catch(() => {});
 
     return successResponse(res, "Booking request created and payment locked", booking, 201);
   } catch (error) {
@@ -169,7 +169,7 @@ export const respondToBooking = async (req, res) => {
       packageDoc.paymentStatus = "refunded";
       await packageDoc.save();
 
-      await notifyUsers([
+      notifyUsers([
         {
           userId: booking.senderId,
           type: "booking_rejected",
@@ -177,7 +177,7 @@ export const respondToBooking = async (req, res) => {
           message: "The traveler rejected your booking. Payment has been refunded.",
           metadata: { bookingId: rejectedBooking._id },
         },
-      ]);
+      ]).catch(() => {});
 
       return successResponse(res, "Booking rejected and payment refunded", rejectedBooking);
     }
@@ -225,7 +225,7 @@ export const respondToBooking = async (req, res) => {
       await Trip.findByIdAndUpdate(reservedTrip._id, { status: "booked" });
     }
 
-    await notifyUsers([
+    notifyUsers([
       {
         userId: acceptedBooking.senderId,
         type: "booking_accepted",
@@ -240,7 +240,7 @@ export const respondToBooking = async (req, res) => {
         message: "Booking is confirmed. Start transit when pickup is done.",
         metadata: { bookingId: acceptedBooking._id },
       },
-    ]);
+    ]).catch(() => {});
 
     return successResponse(res, "Booking accepted", acceptedBooking);
   } catch (error) {
@@ -277,7 +277,7 @@ export const markInTransit = async (req, res) => {
 
     await Package.findByIdAndUpdate(inTransitBooking.packageId, { status: "in-transit" });
 
-    await notifyUsers([
+    notifyUsers([
       {
         userId: inTransitBooking.senderId,
         type: "in_transit",
@@ -285,7 +285,7 @@ export const markInTransit = async (req, res) => {
         message: "Traveler has started transit for your package.",
         metadata: { bookingId: inTransitBooking._id },
       },
-    ]);
+    ]).catch(() => {});
 
     return successResponse(res, "Booking marked as in-transit", inTransitBooking);
   } catch (error) {
@@ -334,7 +334,7 @@ export const generateDeliveryOtp = async (req, res) => {
       response.demoOtp = otp;
     }
 
-    await notifyUsers([
+    notifyUsers([
       {
         userId: booking.travelerId,
         type: "otp_generated",
@@ -342,7 +342,7 @@ export const generateDeliveryOtp = async (req, res) => {
         message: "Sender has generated delivery OTP. Verify on handoff.",
         metadata: { bookingId: booking._id },
       },
-    ]);
+    ]).catch(() => {});
 
     return successResponse(res, "Delivery OTP generated", response);
   } catch (error) {
@@ -440,7 +440,7 @@ export const verifyDeliveryOtp = async (req, res) => {
       await Trip.findByIdAndUpdate(deliveredBooking.tripId, { status: "completed" });
     }
 
-    await notifyUsers([
+    notifyUsers([
       {
         userId: deliveredBooking.senderId,
         type: "delivered",
@@ -452,10 +452,9 @@ export const verifyDeliveryOtp = async (req, res) => {
         userId: deliveredBooking.travelerId,
         type: "payment_released",
         title: "Payment released",
-        message: "Delivery verified. Simulated payment is now released.",
-        metadata: { bookingId: deliveredBooking._id },
+        message: "Delivery verified. Simulated payment is now released.",        metadata: { bookingId: deliveredBooking._id },
       },
-    ]);
+    ]).catch(() => {});
 
     return successResponse(res, "Delivery verified and payment released", deliveredBooking);
   } catch (error) {

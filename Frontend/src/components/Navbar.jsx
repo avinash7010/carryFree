@@ -1,6 +1,7 @@
-import { useEffect, useState } from "react"
+import { useEffect, useState, useCallback } from "react"
 import { Link, useLocation, useNavigate } from "react-router-dom"
 import { clearToken, getToken, getValidToken, getCurrentUser } from "../services/auth"
+import { apiGet } from "../services/api"
 
 const navItems = [
   { to: "/", label: "Home" },
@@ -11,6 +12,7 @@ const navItems = [
   { to: "/browse-trips", label: "Browse Trips" },
   { to: "/browse-packages", label: "Browse Packages" },
   { to: "/carry-dashboard", label: "Dashboard" },
+  { to: "/notifications", label: "Notifications", isNotifications: true },
   { to: "/my-items", label: "My Items" },
   { to: "/browse-items", label: "Browse Items" },
 ]
@@ -24,6 +26,27 @@ function Navbar() {
     return savedTheme ? savedTheme === "dark" : false
   })
   const [currentUser, setCurrentUser] = useState(getCurrentUser())
+  const [unreadCount, setUnreadCount] = useState(0)
+
+  const fetchUnreadCount = useCallback(async () => {
+    const token = getValidToken()
+    if (!token) {
+      setUnreadCount(0)
+      return
+    }
+    try {
+      const response = await apiGet("/notifications/my?page=1&limit=1", token)
+      setUnreadCount(response.data?.unreadCount || 0)
+    } catch {
+      // silent — badge stays at last known count
+    }
+  }, [])
+
+  useEffect(() => {
+    fetchUnreadCount()
+    const interval = setInterval(fetchUnreadCount, 30000)
+    return () => clearInterval(interval)
+  }, [fetchUnreadCount])
 
   useEffect(() => {
     const checkAndSyncAuth = () => {
@@ -33,7 +56,7 @@ function Navbar() {
       const sessionExpired = Boolean(rawToken) && !loggedIn
       setIsLoggedIn(loggedIn)
 
-      if (!loggedIn && !["/login", "/register"].includes(location.pathname)) {
+      if (!loggedIn && ![ "/login", "/register" ].includes(location.pathname)) {
         navigate("/login", {
           replace: true,
           state: sessionExpired
@@ -62,6 +85,7 @@ function Navbar() {
   const handleLogout = () => {
     clearToken()
     setIsLoggedIn(false)
+    setUnreadCount(0)
     navigate("/login")
   }
 
@@ -81,6 +105,9 @@ function Navbar() {
               className={`nav-pill ${location.pathname === item.to ? "nav-pill-active" : ""}`}
             >
               {item.label}
+              {item.isNotifications && isLoggedIn && unreadCount > 0 ? (
+                <span className="nav-badge">{unreadCount}</span>
+              ) : null}
             </Link>
           ))}
         </nav>
@@ -132,6 +159,9 @@ function Navbar() {
                 className={`mobile-menu-item ${location.pathname === item.to ? "active" : ""}`}
               >
                 {item.label}
+                {item.isNotifications && isLoggedIn && unreadCount > 0 ? (
+                  <span className="nav-badge mobile">{unreadCount}</span>
+                ) : null}
               </Link>
             ))}
 

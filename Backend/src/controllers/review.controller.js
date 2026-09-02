@@ -2,6 +2,7 @@ import mongoose from "mongoose";
 import Booking from "../models/Booking.js";
 import User from "../models/User.js";
 import { errorResponse, successResponse } from "../utils/apiResponse.js";
+import { notifyUsers } from "../services/notification.service.js";
 
 /**
  * ============== HELPER FUNCTIONS ==============
@@ -173,6 +174,22 @@ export const submitReview = async (req, res) => {
     const updatedRating = updateUserRating(traveler);
 
     await traveler.save();
+
+    // ============== NOTIFY TRAVELER ==============
+    notifyUsers([
+      {
+        userId: booking.travelerId,
+        type: "review_posted",
+        title: "New review received",
+        message: `A sender left you a ${numericRating}-star review for a delivery.`,
+        metadata: {
+          bookingId: booking._id,
+          reviewerId: reviewerId,
+          travelerId: booking.travelerId,
+          rating: numericRating,
+        },
+      },
+    ]).catch(() => {});
 
     // ============== RETURN SUCCESS ==============
     return successResponse(

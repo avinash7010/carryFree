@@ -41,6 +41,8 @@ const fakeTraveler = {
 
 let originalBookingFindById;
 let originalUserFindById;
+let originalNotificationFindOne;
+let originalNotificationInsertMany;
 
 function setupApp() {
   const app = express();
@@ -52,9 +54,15 @@ function setupApp() {
 async function withServer(fn) {
   const Booking = (await import("../models/Booking.js")).default;
   const User = (await import("../models/User.js")).default;
+  const Notification = (await import("../models/Notification.js")).default;
 
   originalBookingFindById = Booking.findById;
   originalUserFindById = User.findById;
+  originalNotificationFindOne = Notification.findOne;
+  originalNotificationInsertMany = Notification.insertMany;
+
+  Notification.findOne = async () => null;
+  Notification.insertMany = async () => [];
 
   const app = setupApp();
   const server = http.createServer(app);
@@ -65,6 +73,8 @@ async function withServer(fn) {
   } finally {
     Booking.findById = originalBookingFindById;
     User.findById = originalUserFindById;
+    Notification.findOne = originalNotificationFindOne;
+    Notification.insertMany = originalNotificationInsertMany;
     await new Promise((resolve) => server.close(resolve));
   }
 }
