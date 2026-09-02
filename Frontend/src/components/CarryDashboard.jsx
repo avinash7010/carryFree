@@ -31,6 +31,9 @@ function CarryDashboard() {
   const preselectedTripId = searchParams.get("tripId") || "";
   const [preselectedTrip, setPreselectedTrip] = useState(null);
 
+  const preselectedPackageId = searchParams.get("packageId") || "";
+  const [preselectedPackage, setPreselectedPackage] = useState(null);
+
   const [packages, setPackages] = useState([]);
   const [bookings, setBookings] = useState([]);
   const [selectedPackageId, setSelectedPackageId] = useState("");
@@ -74,7 +77,12 @@ function CarryDashboard() {
       setNotifications(notificationResponse.data?.notifications || []);
       setUnreadCount(notificationResponse.data?.unreadCount || 0);
 
-      if (!selectedPackageId && packageList.length > 0) {
+      if (preselectedPackageId) {
+        const matchingPkg = packageList.find((p) => p._id === preselectedPackageId);
+        if (matchingPkg) {
+          setSelectedPackageId(matchingPkg._id);
+        }
+      } else if (!selectedPackageId && packageList.length > 0) {
         setSelectedPackageId(packageList[0]._id);
       }
 
@@ -171,6 +179,23 @@ function CarryDashboard() {
 
     fetchTrip();
   }, [preselectedTripId, token]);
+
+  useEffect(() => {
+    if (!preselectedPackageId || !token) {
+      return;
+    }
+
+    const fetchPackage = async () => {
+      try {
+        const response = await apiGet(`/packages/${preselectedPackageId}`, token);
+        setPreselectedPackage(response.data || null);
+      } catch {
+        setPreselectedPackage(null);
+      }
+    };
+
+    fetchPackage();
+  }, [preselectedPackageId, token]);
 
   const handleFindMatches = async () => {
     if (!selectedPackageId || !token) {
@@ -374,6 +399,39 @@ function CarryDashboard() {
             <p className="default-state" style={{ marginTop: "0.5rem" }}>
               Select your package below, then fetch matches to see if this trip is available.
             </p>
+          </section>
+        ) : null}
+
+        {preselectedPackage ? (
+          <section className="dashboard-panel">
+            <div className="panel-title-row">
+              <h3>Selected Package</h3>
+              <button type="button" className="secondary-btn small-btn" onClick={() => { setPreselectedPackage(null); searchParams.delete("packageId"); setSearchParams(searchParams, { replace: true }); }}>
+                Clear
+              </button>
+            </div>
+            <div className="match-card">
+              <div>
+                <p className="match-route">{preselectedPackage.pickupLocation?.city} → {preselectedPackage.dropLocation?.city}</p>
+                <p className="match-meta">
+                  Weight: {preselectedPackage.weight}kg | Expected: {new Date(preselectedPackage.expectedDate).toLocaleDateString()} | Status: {preselectedPackage.status}
+                </p>
+                {preselectedPackage.senderId ? (
+                  <p className="match-meta subtle">
+                    Sender: {preselectedPackage.senderId.name || "Unknown"} ({preselectedPackage.senderId.email || ""})
+                  </p>
+                ) : null}
+              </div>
+            </div>
+            {preselectedPackage.status === "pending" ? (
+              <p className="default-state" style={{ marginTop: "0.5rem" }}>
+                This package is available. Select it below to find matching trips.
+              </p>
+            ) : preselectedPackage.status === "matched" ? (
+              <p className="default-state" style={{ marginTop: "0.5rem" }}>
+                This package is already matched to a trip.
+              </p>
+            ) : null}
           </section>
         ) : null}
 

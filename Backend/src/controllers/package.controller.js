@@ -125,6 +125,36 @@ export const getMyPackages = async (req, res) => {
   }
 };
 
+export const getPackageById = async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    if (!mongoose.Types.ObjectId.isValid(id)) {
+      return errorResponse(res, "Invalid package id", 400);
+    }
+
+    const pkg = await Package.findById(id)
+      .select("pickupLocation dropLocation expectedDate weight status paymentStatus createdAt matchedTrip senderId")
+      .populate({
+        path: "matchedTrip",
+        select: "source destination date capacityKg availableCapacityKg status travelerId",
+        populate: {
+          path: "travelerId",
+          select: "name email role rating totalReviews completedDeliveries"
+        }
+      })
+      .populate("senderId", "name email role rating completedDeliveries");
+
+    if (!pkg) {
+      return errorResponse(res, "Package not found", 404);
+    }
+
+    return successResponse(res, "Package fetched", pkg);
+  } catch (error) {
+    return errorResponse(res, "Failed to fetch package", 500, error.message);
+  }
+};
+
 export const getAllPackages = async (req, res) => {
   try {
     const filters = {};

@@ -64,3 +64,5 @@ export const getTravelerStats = (travelerId) => apiGet(`/reviews/stats/${travele
 
 export const getMyLostItems = (token) => apiGet("/lost-items/my", token);
 export const getMyFoundItems = (token) => apiGet("/found-items/my", token);
+
+export const getPublicPackages = (params = "") => apiGet(`/packages${params ? `?${params}` : ""}`);
