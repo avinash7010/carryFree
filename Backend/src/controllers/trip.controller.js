@@ -91,6 +91,28 @@ export const createTrip = async (req, res) => {
   }
 };
 
+export const getTripById = async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    if (!mongoose.Types.ObjectId.isValid(id)) {
+      return errorResponse(res, "Invalid trip id", 400);
+    }
+
+    const trip = await Trip.findById(id)
+      .select("source destination date availableCapacityKg capacityKg status travelerId notes")
+      .populate("travelerId", "name email role rating totalReviews completedDeliveries");
+
+    if (!trip) {
+      return errorResponse(res, "Trip not found", 404);
+    }
+
+    return successResponse(res, "Trip fetched", trip);
+  } catch (error) {
+    return errorResponse(res, "Failed to fetch trip", 500, error.message);
+  }
+};
+
 export const getMyTrips = async (req, res) => {
   try {
     const trips = await Trip.find({ travelerId: req.user.id })

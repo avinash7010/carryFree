@@ -9,6 +9,7 @@ export const getFoundItemMatches = (foundItemId, token) =>
 
 export const getMyPackages = (token) => apiGet("/packages/my", token);
 export const getMyTrips = (token) => apiGet("/trips/my", token);
+export const getOpenTrips = (params = "") => apiGet(`/trips${params ? `?${params}` : ""}`);
 export const getMyBookings = (token, role = "") => {
   const suffix = role ? `?role=${encodeURIComponent(role)}` : "";
   return apiGet(`/bookings/my${suffix}`, token);

@@ -655,6 +655,11 @@ textarea.modern-input {
   align-items: center;
 }
 
+.match-card.highlighted {
+  border-color: var(--success);
+  background: rgba(26, 155, 98, 0.04);
+}
+
 .match-meta.subtle {
   font-size: 0.82rem;
 }

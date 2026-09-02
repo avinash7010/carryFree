@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
+import { useSearchParams } from "react-router-dom";
 import {
   addTrackingUpdate,
   createBooking,
@@ -18,10 +19,15 @@ import {
   verifyDelivery,
 } from "../services/carryfreeApi";
 import { getCurrentUser, getValidToken } from "../services/auth";
+import { apiGet } from "../services/api";
 
 function CarryDashboard() {
+  const [searchParams, setSearchParams] = useSearchParams();
   const token = getValidToken();
   const currentUser = useMemo(() => getCurrentUser(), []);
+
+  const preselectedTripId = searchParams.get("tripId") || "";
+  const [preselectedTrip, setPreselectedTrip] = useState(null);
 
   const [packages, setPackages] = useState([]);
   const [bookings, setBookings] = useState([]);
@@ -109,6 +115,23 @@ function CarryDashboard() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [token]);
 
+  useEffect(() => {
+    if (!preselectedTripId || !token) {
+      return;
+    }
+
+    const fetchTrip = async () => {
+      try {
+        const response = await apiGet(`/trips/${preselectedTripId}`, token);
+        setPreselectedTrip(response.data || null);
+      } catch {
+        setPreselectedTrip(null);
+      }
+    };
+
+    fetchTrip();
+  }, [preselectedTripId, token]);
+
   const handleFindMatches = async () => {
     if (!selectedPackageId || !token) {
       return;
@@ -141,6 +164,9 @@ function CarryDashboard() {
     try {
       await createBooking({ packageId: selectedPackageId, tripId }, token);
       setMessage("Booking requested successfully and payment locked.");
+      setPreselectedTrip(null);
+      searchParams.delete("tripId");
+      setSearchParams(searchParams, { replace: true });
       await loadDashboard();
     } catch (bookingError) {
       setError(bookingError.message || "Failed to create booking");
@@ -284,6 +310,33 @@ function CarryDashboard() {
         {message ? <p className="message success">{message}</p> : null}
         {error ? <p className="message error">{error}</p> : null}
 
+        {preselectedTrip ? (
+          <section className="dashboard-panel">
+            <div className="panel-title-row">
+              <h3>Selected Trip</h3>
+              <button type="button" className="secondary-btn small-btn" onClick={() => { setPreselectedTrip(null); searchParams.delete("tripId"); setSearchParams(searchParams, { replace: true }); }}>
+                Clear
+              </button>
+            </div>
+            <div className="match-card">
+              <div>
+                <p className="match-route">{preselectedTrip.source?.city} → {preselectedTrip.destination?.city}</p>
+                <p className="match-meta">
+                  Date: {new Date(preselectedTrip.date).toLocaleDateString()} | Capacity: {preselectedTrip.availableCapacityKg}kg
+                </p>
+                {preselectedTrip.travelerId ? (
+                  <p className="match-meta subtle">
+                    Traveler: {preselectedTrip.travelerId.name || "Unknown"} ({preselectedTrip.travelerId.email || ""})
+                  </p>
+                ) : null}
+              </div>
+            </div>
+            <p className="default-state" style={{ marginTop: "0.5rem" }}>
+              Select your package below, then fetch matches to see if this trip is available.
+            </p>
+          </section>
+        ) : null}
+
         {loading ? <p className="default-state">Loading dashboard...</p> : null}
 
         {!loading ? (
@@ -334,22 +387,25 @@ function CarryDashboard() {
               </div>
 
               <div className="match-list">
-                {matchResults.map((match) => (
-                  <div key={match.trip._id} className="match-card">
-                    <div>
-                      <p className="match-route">{match.trip.source?.city} to {match.trip.destination?.city}</p>
-                      <p className="match-meta">
-                        Score: {match.score} | Date: {new Date(match.trip.date).toLocaleDateString()} | Capacity: {match.trip.availableCapacityKg}kg
-                      </p>
-                      <p className="match-meta subtle">
-                        Route: {match.reasons?.route}% | Date: {match.reasons?.date}% | Capacity: {match.reasons?.capacity}%
-                      </p>
+                {matchResults.map((match) => {
+                  const isPreselected = preselectedTripId && match.trip._id === preselectedTripId;
+                  return (
+                    <div key={match.trip._id} className={`match-card${isPreselected ? " highlighted" : ""}`}>
+                      <div>
+                        <p className="match-route">
+                          {match.trip.source?.city} to {match.trip.destination?.city}
+                          {isPreselected ? " (selected)" : ""}
+                        </p>
+                        <p className="match-meta">
+                          Score: {match.score} | Date: {new Date(match.trip.date).toLocaleDateString()} | Capacity: {match.trip.availableCapacityKg}kg
+                        </p>
+                      </div>
+                      <button type="button" className="secondary-btn small-btn" onClick={() => handleBook(match.trip._id)} disabled={actionLoading}>
+                        {isPreselected ? "Book this trip" : "Book traveler"}
+                      </button>
                     </div>
-                    <button type="button" className="secondary-btn small-btn" onClick={() => handleBook(match.trip._id)} disabled={actionLoading}>
-                      Book traveler
-                    </button>
-                  </div>
-                ))}
+                  );
+                })}
 
                 {matchResults.length === 0 ? <p className="default-state">No matches fetched yet.</p> : null}
               </div>

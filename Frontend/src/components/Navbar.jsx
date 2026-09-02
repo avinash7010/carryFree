@@ -8,6 +8,7 @@ const navItems = [
   { to: "/report-found", label: "Report Found" },
   { to: "/post-package", label: "Post Package" },
   { to: "/post-trip", label: "Post Trip" },
+  { to: "/browse-trips", label: "Browse Trips" },
   { to: "/carry-dashboard", label: "Dashboard" },
   { to: "/browse-items", label: "Browse Items" },
 ]

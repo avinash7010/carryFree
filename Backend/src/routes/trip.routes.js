@@ -4,6 +4,7 @@ import {
   createTrip,
   getMyTrips,
   getOpenTrips,
+  getTripById,
 } from "../controllers/trip.controller.js";
 
 const router = express.Router();
@@ -11,5 +12,6 @@ const router = express.Router();
 router.get("/", getOpenTrips);
 router.get("/my", authMiddleware, getMyTrips);
 router.post("/", authMiddleware, createTrip);
+router.get("/:id", getTripById);
 
 export default router;
