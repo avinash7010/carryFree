@@ -10,6 +10,7 @@ const navItems = [
   { to: "/post-trip", label: "Post Trip" },
   { to: "/browse-trips", label: "Browse Trips" },
   { to: "/carry-dashboard", label: "Dashboard" },
+  { to: "/my-items", label: "My Items" },
   { to: "/browse-items", label: "Browse Items" },
 ]
 

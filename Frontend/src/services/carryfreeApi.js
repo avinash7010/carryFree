@@ -61,3 +61,6 @@ export const updateClaimStatus = (claimId, status, token) =>
 export const submitReview = (payload, token) => apiPost("/reviews", payload, token);
 export const getTravelerReviews = (travelerId) => apiGet(`/reviews/traveler/${travelerId}`);
 export const getTravelerStats = (travelerId) => apiGet(`/reviews/stats/${travelerId}`);
+
+export const getMyLostItems = (token) => apiGet("/lost-items/my", token);
+export const getMyFoundItems = (token) => apiGet("/found-items/my", token);

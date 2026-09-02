@@ -320,6 +320,7 @@ body[data-theme="dark"] .match-card,
 body[data-theme="dark"] .booking-card,
 body[data-theme="dark"] .review-card,
 body[data-theme="dark"] .filter-grid,
+body[data-theme="dark"] .empty-state-card,
 body[data-theme="dark"] .modern-input,
 body[data-theme="dark"] .mobile-menu-panel {
   background: var(--bg-card);
@@ -345,7 +346,8 @@ body[data-theme="dark"] .logout-btn,
 body[data-theme="dark"] .mobile-menu-item,
 body[data-theme="dark"] .nav-pill,
 body[data-theme="dark"] .mobile-menu-btn,
-body[data-theme="dark"] .secondary-btn {
+body[data-theme="dark"] .secondary-btn,
+body[data-theme="dark"] .tab-btn {
   background: rgba(15, 23, 42, 0.75);
   color: var(--text-main);
   border-color: var(--border-soft);

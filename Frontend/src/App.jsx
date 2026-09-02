@@ -14,6 +14,7 @@ const PostPackage = lazy(() => import("./components/PostPackage"))
 const PostTrip = lazy(() => import("./components/PostTrip"))
 const CarryDashboard = lazy(() => import("./components/CarryDashboard"))
 const BrowseTrips = lazy(() => import("./components/BrowseTrips"))
+const MyItems = lazy(() => import("./components/MyItems"))
 const Login = lazy(() => import("./components/Login"))
 const Register = lazy(() => import("./components/Register"))
 const Profile = lazy(() => import("./components/Profile"))
@@ -45,6 +46,7 @@ function App() {
               <Route path="/post-trip" element={<ProtectedRoute><PostTrip /></ProtectedRoute>} />
               <Route path="/browse-trips" element={<BrowseTrips />} />
               <Route path="/carry-dashboard" element={<ProtectedRoute><CarryDashboard /></ProtectedRoute>} />
+              <Route path="/my-items" element={<ProtectedRoute><MyItems /></ProtectedRoute>} />
               <Route path="/profile/:id" element={<ProtectedRoute><Profile /></ProtectedRoute>} />
               <Route path="/login" element={<GuestRoute><Login /></GuestRoute>} />
               <Route path="/register" element={<GuestRoute><Register /></GuestRoute>} />
